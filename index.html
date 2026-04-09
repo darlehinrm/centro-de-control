@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HydroSentinel - Centro de Control</title>
+    <title>HydroSentinel - Centro de Control Cloud</title>
     <!-- Framework CSS Tailwind para diseño corporativo -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Iconos vectoriales -->
@@ -25,7 +25,7 @@
             </div>
             <div class="flex items-center space-x-2 bg-slate-800 px-4 py-1.5 rounded-full text-sm border border-slate-700">
                 <div id="statusDot" class="w-2.5 h-2.5 rounded-full bg-yellow-500 animate-pulse shadow-[0_0_8px_rgba(234,179,8,0.8)]"></div>
-                <span class="font-medium text-slate-300 tracking-wide" id="connectionStatus">Iniciando...</span>
+                <span class="font-medium text-slate-300 tracking-wide" id="connectionStatus">Conectando a Firebase...</span>
             </div>
         </div>
     </nav>
@@ -45,7 +45,7 @@
                     <span class="text-xl text-slate-500 font-bold">cm</span>
                 </div>
                 <p class="text-sm mt-3 text-slate-500 flex items-center gap-1">
-                    <i data-lucide="activity" class="w-4 h-4 text-blue-500"></i> Dato en tiempo real
+                    <i data-lucide="cloud" class="w-4 h-4 text-blue-500"></i> Sincronizado con la nube
                 </p>
             </div>
 
@@ -54,7 +54,7 @@
                 <p class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-1">Estado de Operación</p>
                 <div class="flex items-center space-x-3 mt-3">
                     <div id="statusIcon" class="p-3 bg-slate-100 rounded-xl">
-                        <i data-lucide="check-circle" class="w-8 h-8 text-slate-400"></i>
+                        <i data-lucide="loader" class="w-8 h-8 text-slate-400 animate-spin"></i>
                     </div>
                     <div>
                         <h2 class="text-2xl font-bold text-slate-700" id="systemStatus">Evaluando...</h2>
@@ -68,7 +68,7 @@
                 <p class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-1">Última Transmisión</p>
                 <h2 class="text-2xl font-bold text-slate-700 mt-2" id="lastSync">--:--:--</h2>
                 <div class="w-full bg-slate-100 h-1.5 rounded-full mt-4 overflow-hidden">
-                    <div class="bg-blue-500 h-full w-full animate-[progress_5s_linear_infinite]" style="transform-origin: left;"></div>
+                    <div class="bg-blue-500 h-full w-full animate-[progress_15s_linear_infinite]" style="transform-origin: left;"></div>
                 </div>
             </div>
         </div>
@@ -101,10 +101,6 @@
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 lg:col-span-3">
                 <div class="flex justify-between items-center mb-6">
                     <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest">Análisis de Tendencia Histórica</h3>
-                    <button class="text-xs bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg transition-colors font-medium shadow-sm flex items-center gap-2">
-                        <i data-lucide="cloud-download" class="w-4 h-4"></i>
-                        Descargar Registro
-                    </button>
                 </div>
                 <div class="relative h-72 w-full">
                     <canvas id="telemetryChart"></canvas>
@@ -117,17 +113,12 @@
     <script>
         lucide.createIcons();
 
-        // 🛑 CONFIGURACIÓN DE FIREBASE 🛑
-        // Pega aquí la URL exacta de tu Firebase, conservando el https:// y añadiendo /historial.json
-        const FIREBASE_URL = "https://hydrosentinel-b7ad6-default-rtdb.firebaseio.com/"; 
+        // 🛑 URL OFICIAL DE TU BASE DE DATOS FIREBASE 🛑
+        const FIREBASE_URL = "https://hydrosentinel-b7ad6-default-rtdb.firebaseio.com/historial.json"; 
         
         const PROFUNDIDAD_MAX = 130;
         const NIVEL_ALERTA = 110;
         const NIVEL_CRITICO = 125;
-
-        // Variables para la simulación
-        let mockData = {};
-        let mockNivelActual = 50; 
 
         // Inicialización de la gráfica
         const ctx = document.getElementById('telemetryChart').getContext('2d');
@@ -160,51 +151,28 @@
             }
         });
 
-        // Función para simular datos cuando no hay Firebase configurado
-        function generarDatosSimulados() {
-            // Fluctuación aleatoria del nivel
-            mockNivelActual += (Math.random() * 6) - 3;
-            if (mockNivelActual > PROFUNDIDAD_MAX) mockNivelActual = PROFUNDIDAD_MAX;
-            if (mockNivelActual < 0) mockNivelActual = 0;
-
-            const timestamp = new Date().getTime();
-            mockData[`sim_${timestamp}`] = { nivel: Math.round(mockNivelActual) };
-
-            // Mantener el array corto
-            const keys = Object.keys(mockData);
-            if (keys.length > 20) {
-                delete mockData[keys[0]];
-            }
-
-            procesarDatos(mockData);
-        }
-
         // Función para consultar a Firebase
         async function fetchCloudData() {
-            // Verificamos si aún está la URL por defecto para evitar el error HTTP
-            if (FIREBASE_URL.includes("tu-proyecto.firebaseio.com")) {
-                document.getElementById('connectionStatus').innerText = "Modo Demo (Falta URL)";
-                document.getElementById('statusDot').className = "w-2.5 h-2.5 rounded-full bg-yellow-500 animate-pulse shadow-[0_0_8px_rgba(234,179,8,0.8)]";
-                generarDatosSimulados();
-                return;
-            }
-
             try {
-                const response = await fetch(FIREBASE_URL);
+                // Prevenimos cache para traer siempre el dato más fresco
+                const response = await fetch(FIREBASE_URL + "?nocache=" + new Date().getTime());
                 if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
                 
                 const data = await response.json();
                 
-                if (data) {
+                // data será null si la base de datos está totalmente vacía
+                if (data && typeof data === 'object') {
                     document.getElementById('connectionStatus').innerText = "Nube Conectada";
                     document.getElementById('statusDot').className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]";
                     procesarDatos(data);
                 } else {
-                    document.getElementById('connectionStatus').innerText = "Base de datos vacía";
+                    // Estado cuando el ESP32 aún no ha enviado el primer dato
+                    document.getElementById('connectionStatus').innerText = "Esperando primer dato del ESP32...";
+                    document.getElementById('statusDot').className = "w-2.5 h-2.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]";
                 }
             } catch (error) {
                 console.error("Fallo de conexión con Firebase:", error);
-                document.getElementById('connectionStatus').innerText = "Error de Enlace";
+                document.getElementById('connectionStatus').innerText = "Error de Red";
                 document.getElementById('statusDot').className = "w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]";
             }
         }
@@ -226,7 +194,7 @@
             const ahora = new Date();
             document.getElementById('lastSync').innerText = ahora.toLocaleTimeString();
 
-            // Actualizar Estado Operativo
+            // Referencias del DOM
             let statusEl = document.getElementById('systemStatus');
             let descEl = document.getElementById('statusDesc');
             let iconEl = document.getElementById('statusIcon');
