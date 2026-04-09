@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HydroSentinel - Centro de Control</title>
+    <!-- Framework CSS Tailwind para diseño corporativo -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Iconos vectoriales -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Librería de gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .water-fill { transition: height 1.5s ease-in-out, background-color 0.5s ease; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800 font-sans">
+
+    <!-- Barra de Navegación Corporativa -->
+    <nav class="bg-slate-900 text-white shadow-xl p-4 border-b-4 border-blue-600">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <i data-lucide="shield-check" class="w-8 h-8 text-blue-500"></i>
+                <h1 class="text-2xl font-bold tracking-wider">HydroSentinel <span class="text-slate-400 text-sm font-normal ml-2">v2.0 Cloud Node</span></h1>
+            </div>
+            <div class="flex items-center space-x-2 bg-slate-800 px-4 py-1.5 rounded-full text-sm border border-slate-700">
+                <div id="statusDot" class="w-2.5 h-2.5 rounded-full bg-yellow-500 animate-pulse shadow-[0_0_8px_rgba(234,179,8,0.8)]"></div>
+                <span class="font-medium text-slate-300 tracking-wide" id="connectionStatus">Iniciando...</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contenido del Dashboard -->
+    <main class="max-w-7xl mx-auto p-4 md:p-6 mt-6">
+        
+        <!-- Tarjetas de Telemetría -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            
+            <!-- Nivel Hídrico -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-24 h-24 bg-blue-50 rounded-bl-full -z-10"></div>
+                <p class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-1">Nivel Hidrológico</p>
+                <div class="flex items-baseline space-x-2 mt-2">
+                    <h2 class="text-5xl font-black text-blue-600" id="currentLevel">--</h2>
+                    <span class="text-xl text-slate-500 font-bold">cm</span>
+                </div>
+                <p class="text-sm mt-3 text-slate-500 flex items-center gap-1">
+                    <i data-lucide="activity" class="w-4 h-4 text-blue-500"></i> Dato en tiempo real
+                </p>
+            </div>
+
+            <!-- Estado de Riesgo -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 relative overflow-hidden">
+                <p class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-1">Estado de Operación</p>
+                <div class="flex items-center space-x-3 mt-3">
+                    <div id="statusIcon" class="p-3 bg-slate-100 rounded-xl">
+                        <i data-lucide="check-circle" class="w-8 h-8 text-slate-400"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-700" id="systemStatus">Evaluando...</h2>
+                        <span class="text-sm font-medium text-slate-500" id="statusDesc">Esperando paquete de datos</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Última Sincronización -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col justify-center relative overflow-hidden">
+                <p class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-1">Última Transmisión</p>
+                <h2 class="text-2xl font-bold text-slate-700 mt-2" id="lastSync">--:--:--</h2>
+                <div class="w-full bg-slate-100 h-1.5 rounded-full mt-4 overflow-hidden">
+                    <div class="bg-blue-500 h-full w-full animate-[progress_5s_linear_infinite]" style="transform-origin: left;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Área Analítica -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            
+            <!-- Simulador Visual del Canal -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 lg:col-span-1 flex flex-col items-center justify-center">
+                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest w-full text-left mb-6">Corte Transversal</h3>
+                
+                <div class="relative w-40 h-72 border-x-4 border-b-4 border-slate-700 rounded-b-md bg-slate-100 overflow-hidden shadow-inner">
+                    <!-- Marcas de Profundidad -->
+                    <div class="absolute left-0 top-0 h-full w-full z-10 flex flex-col justify-between py-2 pointer-events-none">
+                        <div class="w-full border-b border-slate-300 border-dashed opacity-50"><span class="text-[10px] font-mono text-slate-500 ml-1">130cm (Sensor)</span></div>
+                        <div class="w-full border-b border-red-300 border-dashed"><span class="text-[10px] font-mono text-red-500 ml-1">125cm (Crítico)</span></div>
+                        <div class="w-full border-b border-yellow-300 border-dashed"><span class="text-[10px] font-mono text-yellow-600 ml-1">110cm (Alerta)</span></div>
+                        <div class="w-full border-b border-slate-300 border-dashed opacity-50"><span class="text-[10px] font-mono text-slate-500 ml-1">65cm</span></div>
+                        <div class="w-full"><span class="text-[10px] font-mono text-slate-500 ml-1">0cm (Fondo)</span></div>
+                    </div>
+                    
+                    <!-- Animación del Agua -->
+                    <div id="waterLevel" class="absolute bottom-0 left-0 w-full bg-blue-500 water-fill shadow-[0_-4px_12px_rgba(59,130,246,0.5)]" style="height: 0%;">
+                        <div class="absolute top-0 left-0 w-full h-2 bg-white opacity-30"></div> <!-- Brillo superficie -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráfica de Tendencias -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 lg:col-span-3">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest">Análisis de Tendencia Histórica</h3>
+                    <button class="text-xs bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg transition-colors font-medium shadow-sm flex items-center gap-2">
+                        <i data-lucide="cloud-download" class="w-4 h-4"></i>
+                        Descargar Registro
+                    </button>
+                </div>
+                <div class="relative h-72 w-full">
+                    <canvas id="telemetryChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- LÓGICA DEL DASHBOARD Y CONEXIÓN A FIREBASE -->
+    <script>
+        lucide.createIcons();
+
+        // 🛑 CONFIGURACIÓN DE FIREBASE 🛑
+        // Pega aquí la URL exacta de tu Firebase, conservando el https:// y añadiendo /historial.json
+        const FIREBASE_URL = "https://tu-proyecto.firebaseio.com/historial.json"; 
+        
+        const PROFUNDIDAD_MAX = 130;
+        const NIVEL_ALERTA = 110;
+        const NIVEL_CRITICO = 125;
+
+        // Variables para la simulación
+        let mockData = {};
+        let mockNivelActual = 50; 
+
+        // Inicialización de la gráfica
+        const ctx = document.getElementById('telemetryChart').getContext('2d');
+        const telemetryChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [], 
+                datasets: [{
+                    label: 'Nivel Hidrológico (cm)',
+                    data: [],
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    borderWidth: 3,
+                    pointBackgroundColor: '#1e40af',
+                    pointRadius: 3,
+                    pointHoverRadius: 6,
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, max: PROFUNDIDAD_MAX, grid: { color: '#f1f5f9' } },
+                    x: { grid: { display: false }, ticks: { maxTicksLimit: 10 } }
+                },
+                plugins: { legend: { display: false } },
+                animation: { duration: 500 }
+            }
+        });
+
+        // Función para simular datos cuando no hay Firebase configurado
+        function generarDatosSimulados() {
+            // Fluctuación aleatoria del nivel
+            mockNivelActual += (Math.random() * 6) - 3;
+            if (mockNivelActual > PROFUNDIDAD_MAX) mockNivelActual = PROFUNDIDAD_MAX;
+            if (mockNivelActual < 0) mockNivelActual = 0;
+
+            const timestamp = new Date().getTime();
+            mockData[`sim_${timestamp}`] = { nivel: Math.round(mockNivelActual) };
+
+            // Mantener el array corto
+            const keys = Object.keys(mockData);
+            if (keys.length > 20) {
+                delete mockData[keys[0]];
+            }
+
+            procesarDatos(mockData);
+        }
+
+        // Función para consultar a Firebase
+        async function fetchCloudData() {
+            // Verificamos si aún está la URL por defecto para evitar el error HTTP
+            if (FIREBASE_URL.includes("tu-proyecto.firebaseio.com")) {
+                document.getElementById('connectionStatus').innerText = "Modo Demo (Falta URL)";
+                document.getElementById('statusDot').className = "w-2.5 h-2.5 rounded-full bg-yellow-500 animate-pulse shadow-[0_0_8px_rgba(234,179,8,0.8)]";
+                generarDatosSimulados();
+                return;
+            }
+
+            try {
+                const response = await fetch(FIREBASE_URL);
+                if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+                
+                const data = await response.json();
+                
+                if (data) {
+                    document.getElementById('connectionStatus').innerText = "Nube Conectada";
+                    document.getElementById('statusDot').className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]";
+                    procesarDatos(data);
+                } else {
+                    document.getElementById('connectionStatus').innerText = "Base de datos vacía";
+                }
+            } catch (error) {
+                console.error("Fallo de conexión con Firebase:", error);
+                document.getElementById('connectionStatus').innerText = "Error de Enlace";
+                document.getElementById('statusDot').className = "w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]";
+            }
+        }
+
+        // Función para dibujar los datos extraídos
+        function procesarDatos(historialData) {
+            // Extraemos los valores a un array
+            const lecturas = Object.values(historialData);
+            if (lecturas.length === 0) return;
+
+            // Tomamos la lectura más reciente
+            const ultimaLectura = lecturas[lecturas.length - 1];
+            const nivelActual = ultimaLectura.nivel;
+
+            // Actualizar Tarjeta de Nivel
+            document.getElementById('currentLevel').innerText = nivelActual;
+            
+            // Actualizar Fecha/Hora
+            const ahora = new Date();
+            document.getElementById('lastSync').innerText = ahora.toLocaleTimeString();
+
+            // Actualizar Estado Operativo
+            let statusEl = document.getElementById('systemStatus');
+            let descEl = document.getElementById('statusDesc');
+            let iconEl = document.getElementById('statusIcon');
+            let waterDiv = document.getElementById('waterLevel');
+
+            // Calcular porcentaje para el tanque visual
+            let porcentaje = (nivelActual / PROFUNDIDAD_MAX) * 100;
+            waterDiv.style.height = `${Math.min(Math.max(porcentaje, 0), 100)}%`;
+
+            // Lógica de Semáforo de Riesgo
+            if (nivelActual >= NIVEL_CRITICO) {
+                statusEl.innerText = "ALERTA CRÍTICA";
+                statusEl.className = "text-2xl font-bold text-red-600";
+                descEl.innerText = "Posible desbordamiento";
+                iconEl.className = "p-3 bg-red-100 rounded-xl text-red-600 animate-pulse";
+                iconEl.innerHTML = '<i data-lucide="alert-triangle" class="w-8 h-8"></i>';
+                waterDiv.className = "absolute bottom-0 left-0 w-full bg-red-500 water-fill shadow-[0_-4px_12px_rgba(239,68,68,0.5)]";
+            } else if (nivelActual >= NIVEL_ALERTA) {
+                statusEl.innerText = "PRECAUCIÓN";
+                statusEl.className = "text-2xl font-bold text-yellow-600";
+                descEl.innerText = "Nivel anormalmente elevado";
+                iconEl.className = "p-3 bg-yellow-100 rounded-xl text-yellow-600";
+                iconEl.innerHTML = '<i data-lucide="alert-circle" class="w-8 h-8"></i>';
+                waterDiv.className = "absolute bottom-0 left-0 w-full bg-yellow-400 water-fill shadow-[0_-4px_12px_rgba(250,204,21,0.5)]";
+            } else {
+                statusEl.innerText = "ESTABLE";
+                statusEl.className = "text-2xl font-bold text-emerald-600";
+                descEl.innerText = "Parámetros dentro de lo normal";
+                iconEl.className = "p-3 bg-emerald-100 rounded-xl text-emerald-600";
+                iconEl.innerHTML = '<i data-lucide="check-circle" class="w-8 h-8"></i>';
+                waterDiv.className = "absolute bottom-0 left-0 w-full bg-blue-500 water-fill shadow-[0_-4px_12px_rgba(59,130,246,0.5)]";
+            }
+            lucide.createIcons();
+
+            // Actualizar Gráfica (Mostrar los últimos 20 puntos)
+            const muestrasParaGraficar = lecturas.slice(-20);
+            
+            telemetryChart.data.labels = muestrasParaGraficar.map((_, i) => `T-${muestrasParaGraficar.length - i}`);
+            telemetryChart.data.datasets[0].data = muestrasParaGraficar.map(d => d.nivel);
+            
+            telemetryChart.update();
+        }
+
+        // Ejecutar la sincronización al inicio y luego cada 15 segundos
+        fetchCloudData();
+        setInterval(fetchCloudData, 15000); 
+
+    </script>
+</body>
+</html>
