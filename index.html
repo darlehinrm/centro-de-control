@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HydroSentinel - Centro de Control NOC</title>
-    <!-- Framework CSS Tailwind para diseño corporativo -->
+    <!-- Framework CSS Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Iconos vectoriales -->
+    <!-- Iconos Lucide -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Librería de gráficos -->
+    <!-- Librería Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         .water-fill { transition: height 1.5s ease-in-out, background-color 0.5s ease; }
@@ -17,11 +17,9 @@
             background-size: 100% 2px, 3px 100%;
             pointer-events: none;
         }
-        /* Custom scrollbar para la tabla */
         .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-800 font-sans pb-12">
@@ -31,53 +29,38 @@
         <div class="max-w-7xl mx-auto flex justify-between items-center">
             <div class="flex items-center space-x-3">
                 <i data-lucide="shield-check" class="w-8 h-8 text-blue-500"></i>
-                <h1 class="text-xl md:text-2xl font-bold tracking-wider truncate">HydroSentinel <span class="hidden md:inline text-slate-400 text-sm font-normal ml-2">v3.2 NOC (Telemetría, Visión y Caudal)</span></h1>
+                <h1 class="text-xl md:text-2xl font-bold tracking-wider truncate">HydroSentinel <span class="hidden md:inline text-slate-400 text-sm font-normal ml-2">v3.7 NOC (Sync Pro + Indicadores)</span></h1>
             </div>
             <div class="flex items-center space-x-2 bg-slate-800 px-4 py-1.5 rounded-full text-xs md:text-sm border border-slate-700">
-                <div id="statusDot" class="w-2.5 h-2.5 rounded-full bg-yellow-500 animate-pulse shadow-[0_0_8px_rgba(234,179,8,0.8)]"></div>
-                <span class="font-medium text-slate-300 tracking-wide" id="connectionStatus">Conectando...</span>
+                <div id="statusDot" class="w-2.5 h-2.5 rounded-full bg-yellow-500 animate-pulse"></div>
+                <span class="font-medium text-slate-300 tracking-wide" id="connectionStatus">Sincronizando...</span>
             </div>
         </div>
     </nav>
 
-    <!-- Contenido del Dashboard -->
     <main class="max-w-7xl mx-auto p-4 md:p-6 mt-4">
         
-        <!-- FILA 1: TARJETAS DE TELEMETRÍA -->
+        <!-- TELEMETRÍA SUPERIOR -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-            
-            <!-- Nivel Hídrico -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 relative overflow-hidden">
-                <div class="absolute top-0 right-0 w-24 h-24 bg-blue-50 rounded-bl-full -z-10"></div>
-                <p class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-1">Nivel (h)</p>
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 relative">
+                <p class="text-sm font-bold text-slate-400 uppercase mb-1">Nivel (h)</p>
                 <div class="flex items-baseline space-x-2 mt-2">
                     <h2 class="text-5xl font-black text-blue-600" id="currentLevel">--</h2>
                     <span class="text-xl text-slate-500 font-bold">cm</span>
                 </div>
-                <p class="text-xs mt-3 text-slate-500 flex items-center gap-1">
-                    <i data-lucide="activity" class="w-4 h-4 text-blue-500"></i> Sensor ultrasónico
-                </p>
             </div>
-
-            <!-- Caudal (Q) -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 relative overflow-hidden">
-                <div class="absolute top-0 right-0 w-24 h-24 bg-cyan-50 rounded-bl-full -z-10"></div>
-                <p class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-1">Caudal Est. (Q)</p>
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <p class="text-sm font-bold text-slate-400 uppercase mb-1">Caudal (Q)</p>
                 <div class="flex items-baseline space-x-2 mt-2">
                     <h2 class="text-5xl font-black text-cyan-600" id="currentFlow">--</h2>
                     <span class="text-xl text-slate-500 font-bold">m³/s</span>
                 </div>
-                <p class="text-xs mt-3 text-slate-500 flex items-center gap-1">
-                    <i data-lucide="waves" class="w-4 h-4 text-cyan-500"></i> Q = 1.45 * L * h^1.5
-                </p>
             </div>
-
-            <!-- Estado de Riesgo -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 relative overflow-hidden">
-                <p class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-1">Estado Operativo</p>
-                <div class="flex items-center space-x-3 mt-3">
-                    <div id="statusIcon" class="p-3 bg-slate-100 rounded-xl">
-                        <i data-lucide="loader" class="w-8 h-8 text-slate-400 animate-spin"></i>
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <p class="text-sm font-bold text-slate-400 uppercase mb-1">Estado Operativo</p>
+                <div id="statusBox" class="flex items-center space-x-3 mt-3">
+                    <div id="statusIcon" class="p-3 bg-slate-100 rounded-xl text-slate-400">
+                        <i data-lucide="loader" class="w-8 h-8 animate-spin"></i>
                     </div>
                     <div>
                         <h2 class="text-xl font-bold text-slate-700" id="systemStatus">Evaluando...</h2>
@@ -85,624 +68,303 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Última Sincronización -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col justify-center relative overflow-hidden">
-                <p class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-1">Última Transmisión</p>
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <p class="text-sm font-bold text-slate-400 uppercase mb-1">Última Sincronización</p>
                 <h2 class="text-2xl font-bold text-slate-700 mt-2" id="lastSync">--:--:--</h2>
                 <div class="w-full bg-slate-100 h-1.5 rounded-full mt-4 overflow-hidden">
-                    <div class="bg-blue-500 h-full w-full animate-[progress_15s_linear_infinite]" style="transform-origin: left;"></div>
+                    <div id="syncProgress" class="bg-blue-500 h-full w-full animate-pulse"></div>
                 </div>
             </div>
         </div>
 
-        <!-- FILA 2: VIDEO EN VIVO Y CORTE TRANSVERSAL -->
+        <!-- VISIÓN DUAL -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-            
-            <!-- Integración de Transmisión de Video -->
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 lg:col-span-2 overflow-hidden flex flex-col">
-                <div class="flex justify-between items-center px-4 md:px-6 py-4 border-b border-slate-100">
-                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                        <i data-lucide="video" class="w-4 h-4"></i> Monitoreo Óptico (Cam-01)
+                <div class="flex justify-between items-center px-6 py-4 border-b border-slate-100 bg-slate-50">
+                    <h3 class="text-sm font-bold text-slate-600 uppercase flex items-center gap-2">
+                        <i data-lucide="video" class="w-4 h-4 text-blue-500"></i> Video en Vivo (Sync Stream)
                     </h3>
-                    <span class="flex items-center gap-2 text-xs font-bold text-emerald-500 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> CONECTADO
+                    <span id="liveBadge" class="text-[10px] font-bold text-slate-400 flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> STANDBY
                     </span>
                 </div>
-                
-                <div class="relative w-full bg-slate-900 flex-grow aspect-video overflow-hidden group flex items-center justify-center">
-                    
-                    <!-- Contenedor dinámico de la cámara -->
-                    <div id="cameraFeedContainer" class="absolute inset-0 w-full h-full flex flex-col items-center justify-center bg-slate-800 text-slate-500">
-                        <!-- SVG de simulación, esto será reemplazado por JS si hay URL válida -->
-                        <svg class="w-24 h-24 mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                        <span class="font-mono text-sm tracking-widest opacity-70">SEÑAL DE CÁMARA SIMULADA</span>
-                        <span class="font-mono text-xs opacity-50 mt-1">(Modo Vista Previa)</span>
+                <div class="relative w-full bg-slate-900 aspect-video flex items-center justify-center overflow-hidden">
+                    <div id="cameraFeed" class="absolute inset-0 w-full h-full flex flex-col items-center justify-center bg-slate-800 text-slate-600">
+                        <svg class="w-20 h-20 mb-4 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                        <span class="font-mono text-[10px] tracking-widest opacity-50 uppercase">Esperando enlace de video real...</span>
                     </div>
-
-                    <!-- Efecto Cámara de Seguridad -->
-                    <div class="absolute inset-0 crt-scanline"></div>
-                    
-                    <!-- Textos OSD de la cámara -->
-                    <div class="absolute top-4 left-4 text-white font-mono text-[10px] md:text-xs font-bold bg-black/50 px-2 py-1 rounded backdrop-blur-sm">
-                        CAM_PRINCIPAL_CANAL
+                    <div class="absolute inset-0 crt-scanline opacity-20 pointer-events-none"></div>
+                    <!-- Reloj del video sincronizado -->
+                    <div class="absolute top-4 left-4 text-white font-mono text-[10px] bg-black/70 px-3 py-1.5 border border-white/10 rounded flex items-center gap-2" id="camTimeContainer">
+                        <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+                        <span id="camTime">REC --:--:--</span>
                     </div>
-                    <div class="absolute top-4 right-4 text-white font-mono text-[10px] md:text-xs font-bold bg-black/50 px-2 py-1 rounded backdrop-blur-sm" id="camTimestamp">--</div>
-                    
-                    <!-- Alerta Dinámica sobre el Video -->
-                    <div id="camOverlay" class="absolute bottom-4 right-4 md:bottom-6 md:right-6 text-emerald-400 font-mono text-[10px] md:text-xs font-bold bg-black/70 px-3 py-2 md:px-4 md:py-2 border border-emerald-500/50 rounded backdrop-blur-md transition-colors duration-500">
-                        <p id="camOverlayText1">SISTEMA VINCULADO</p>
-                        <p id="camOverlayText2">ESPERANDO DATOS...</p>
+                    <div id="camOverlay" class="absolute bottom-4 right-4 text-emerald-400 font-mono text-[10px] bg-black/70 px-3 py-2 border border-emerald-500/50 rounded backdrop-blur-md">
+                        MODO: MONITORIZACIÓN
                     </div>
                 </div>
             </div>
 
-            <!-- Simulador Visual del Canal -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 lg:col-span-1 flex flex-col items-center justify-center relative">
-                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest w-full text-left mb-6">Corte Transversal</h3>
-                
-                <div class="absolute top-16 left-1/2 transform -translate-x-1/2 flex items-center gap-2 text-slate-400 text-xs font-mono font-bold">
-                    <span>⟵</span> <span id="displayL">L = 1.0m</span> <span>⟶</span>
+            <!-- EVIDENCIA FOTOGRÁFICA -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col overflow-hidden">
+                <div class="flex justify-between items-center px-6 py-4 border-b border-slate-100 bg-slate-50">
+                    <h3 class="text-sm font-bold text-slate-600 uppercase flex items-center gap-2">
+                        <i data-lucide="camera" class="w-4 h-4 text-blue-500"></i> Última Evidencia (ESP32-CAM)
+                    </h3>
                 </div>
-
-                <div class="relative w-40 h-[300px] border-x-4 border-b-4 border-slate-700 rounded-b-md bg-slate-100 overflow-hidden shadow-inner mt-4">
-                    <div class="absolute left-0 top-0 h-full w-full z-10 flex flex-col justify-between py-2 pointer-events-none">
-                        <div class="w-full border-b border-slate-300 border-dashed opacity-50"><span class="text-[10px] font-mono text-slate-500 ml-1">130cm (Sensor)</span></div>
-                        <div class="w-full border-b border-red-300 border-dashed"><span class="text-[10px] font-mono text-red-500 ml-1">125cm (Crítico)</span></div>
-                        <div class="w-full border-b border-yellow-300 border-dashed"><span class="text-[10px] font-mono text-yellow-600 ml-1">110cm (Alerta)</span></div>
-                        <div class="w-full border-b border-slate-300 border-dashed opacity-50"><span class="text-[10px] font-mono text-slate-500 ml-1">65cm</span></div>
-                        <div class="w-full"><span class="text-[10px] font-mono text-slate-500 ml-1">0cm (Fondo)</span></div>
-                    </div>
-                    <div id="waterLevel" class="absolute bottom-0 left-0 w-full bg-blue-500 water-fill shadow-[0_-4px_12px_rgba(59,130,246,0.5)]" style="height: 0%;">
-                        <div class="absolute top-0 left-0 w-full h-2 bg-white opacity-30"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- FILA 3: GRÁFICA ACTUAL Y PARÁMETROS -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            
-            <!-- Gráfica de Tendencia Actual -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 lg:col-span-2">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest">Tendencia en Tiempo Real</h3>
-                </div>
-                <div class="relative h-64 w-full">
-                    <canvas id="telemetryChart"></canvas>
-                </div>
-            </div>
-
-            <!-- Configuración del Caudal -->
-            <div class="bg-slate-900 text-white rounded-2xl shadow-sm border border-slate-800 p-6 lg:col-span-1 flex flex-col">
-                <h3 class="text-sm font-bold text-blue-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <i data-lucide="settings-2" class="w-4 h-4"></i> Calibración del Caudal
-                </h3>
-                <p class="text-sm text-slate-400 mb-6 leading-relaxed">
-                    Ajuste el parámetro <strong class="text-white">L</strong> (ancho del canal en metros) para calcular el caudal volumétrico: <br>
-                    <code class="block mt-2 bg-slate-800 p-2 rounded text-cyan-400 border border-slate-700">Q = 1.45 * L * h<sup class="text-[10px]">1.5</sup></code>
-                </p>
-                
-                <div class="mt-auto space-y-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Ancho del Canal (L) en Metros</label>
-                        <div class="relative">
-                            <input type="number" id="inputAnchoL" step="0.1" value="1.0" class="w-full bg-slate-800 border border-slate-700 rounded-lg py-3 px-4 text-white font-bold text-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors" />
-                            <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-slate-400 font-bold">m</div>
+                <div class="relative flex-grow bg-slate-800 flex items-center justify-center overflow-hidden">
+                    <img id="evidenceImage" src="" class="hidden w-full h-full object-cover" alt="Captura Real">
+                    <div id="evidencePlaceholder" class="text-center p-6 flex flex-col items-center">
+                        <div class="w-12 h-12 bg-slate-700 rounded-full flex items-center justify-center mb-4">
+                            <i data-lucide="image" class="w-6 h-6 text-slate-500"></i>
                         </div>
-                        <div id="errorL" class="hidden mt-1 text-xs text-red-400 font-bold flex items-center gap-1">
-                            <i data-lucide="alert-triangle" class="w-3 h-3"></i> Ingrese un valor mayor a 0
-                        </div>
+                        <p class="text-slate-400 text-[10px] font-bold uppercase">Sin capturas de alerta</p>
                     </div>
-                    <button id="btnGuardarL" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-4 rounded-lg transition-colors flex justify-center items-center gap-2">
-                        <i data-lucide="save" class="w-4 h-4"></i> Aplicar Ajuste
+                    <div id="evidenceData" class="hidden absolute bottom-0 left-0 w-full bg-black/80 p-3">
+                        <p class="text-[9px] text-white font-mono uppercase">Registro: <span id="evidenceDate">--</span></p>
+                    </div>
+                </div>
+                <div class="p-4 bg-slate-50 border-t border-slate-100">
+                    <button class="w-full bg-white border border-slate-300 text-slate-700 text-[10px] font-bold py-2 rounded-lg flex items-center justify-center gap-2 shadow-sm">
+                        <i data-lucide="download" class="w-3 h-3"></i> DESCARGAR EVIDENCIA
                     </button>
-                    <div id="saveSuccess" class="hidden text-xs text-emerald-400 font-bold text-center mt-2 animate-pulse">¡Parámetro actualizado exitosamente!</div>
                 </div>
             </div>
         </div>
 
-        <!-- FILA 4: VISOR DINÁMICO DE HISTORIAL AVANZADO -->
+        <!-- EXPLORADOR HISTÓRICO AVANZADO -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                 <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
                     <i data-lucide="bar-chart-2" class="w-5 h-5 text-blue-500"></i> Explorador de Datos Históricos
                 </h3>
-                
-                <!-- Controles de Filtro Avanzado -->
                 <div class="flex flex-wrap items-center gap-3 bg-slate-50 p-2 rounded-xl border border-slate-200">
-                    
-                    <!-- Selector de Rango -->
-                    <select id="histPeriod" class="bg-white border border-slate-300 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block px-3 py-2 font-medium cursor-pointer shadow-sm">
+                    <select id="histPeriod" class="bg-white border border-slate-300 text-slate-700 text-[10px] font-bold rounded-lg px-3 py-2 cursor-pointer outline-none">
                         <option value="7d">Últimos 7 Días</option>
                         <option value="1m" selected>Último Mes</option>
                         <option value="3m">Último Trimestre</option>
-                        <option value="1y">Último Año (Agrupado)</option>
-                        <option value="custom">Rango Personalizado...</option>
+                        <option value="1y">Anual (Vista Grupal)</option>
                     </select>
-                    
-                    <!-- Selector de Fechas (Oculto por defecto) -->
-                    <div id="customDateRange" class="hidden items-center gap-2">
-                        <input type="date" id="dateStart" class="bg-white border border-slate-300 text-slate-700 text-sm rounded-lg px-2 py-1.5 font-medium shadow-sm">
-                        <span class="text-slate-400 font-bold">-</span>
-                        <input type="date" id="dateEnd" class="bg-white border border-slate-300 text-slate-700 text-sm rounded-lg px-2 py-1.5 font-medium shadow-sm">
-                        <button id="btnApplyCustomDate" class="bg-blue-600 hover:bg-blue-700 text-white rounded p-1.5 transition-colors shadow-sm"><i data-lucide="search" class="w-4 h-4"></i></button>
-                    </div>
-
-                    <!-- Selector de Métrica -->
-                    <select id="histMetric" class="bg-white border border-slate-300 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block px-3 py-2 font-medium cursor-pointer shadow-sm">
-                        <option value="nivel">Niveles (Promedio y Máx)</option>
+                    <select id="histMetric" class="bg-white border border-slate-300 text-slate-700 text-[10px] font-bold rounded-lg px-3 py-2 cursor-pointer outline-none">
+                        <option value="nivel">Niveles Hidrométricos</option>
                         <option value="caudal">Caudal Volumétrico (Q)</option>
                     </select>
                 </div>
             </div>
-            
             <div class="relative h-80 w-full">
                 <canvas id="advancedHistoricalChart"></canvas>
             </div>
         </div>
 
-        <!-- FILA 5: REGISTRO HISTÓRICO DE REPORTES -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="px-6 py-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <!-- TABLA DE REPORTES -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-8">
+            <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
                 <h3 class="text-sm font-bold text-slate-600 uppercase tracking-widest flex items-center gap-2">
-                    <i data-lucide="file-text" class="w-5 h-5 text-blue-500"></i> Registro Histórico (Reportes Tabulares)
+                    <i data-lucide="file-text" class="w-5 h-5 text-blue-500"></i> Registro de Reportes Operativos
                 </h3>
-                <div class="flex gap-2">
-                    <button class="bg-blue-50 text-blue-600 border border-blue-200 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-100 transition-colors">Diario</button>
-                    <button class="bg-slate-50 text-slate-600 border border-slate-200 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-slate-100 transition-colors">Mensual</button>
-                    <button class="bg-slate-800 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-slate-700 transition-colors flex items-center gap-1 ml-2">
-                        <i data-lucide="download" class="w-3 h-3"></i> CSV
-                    </button>
-                </div>
+                <button class="bg-slate-800 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold hover:bg-slate-700 transition-colors flex items-center gap-1 shadow-sm">
+                    <i data-lucide="download" class="w-3 h-3"></i> EXPORTAR CSV
+                </button>
             </div>
-            
             <div class="overflow-x-auto custom-scrollbar">
                 <table class="w-full text-left text-sm text-slate-600 whitespace-nowrap">
-                    <thead class="bg-slate-50 text-slate-500 font-bold uppercase text-xs">
+                    <thead class="bg-slate-50 text-slate-500 font-bold uppercase text-[10px]">
                         <tr>
-                            <th class="px-6 py-4">Fecha de Reporte</th>
-                            <th class="px-6 py-4">Nivel Promedio (h)</th>
-                            <th class="px-6 py-4">Nivel Máx. Registrado</th>
-                            <th class="px-6 py-4">Caudal Promedio (Q)</th>
-                            <th class="px-6 py-4">Estado General</th>
+                            <th class="px-6 py-4">Fecha</th>
+                            <th class="px-6 py-4">Nivel Promedio (cm)</th>
+                            <th class="px-6 py-4">Pico Máximo (cm)</th>
+                            <th class="px-6 py-4">Caudal Est. (m³/s)</th>
+                            <th class="px-6 py-4">Estado</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100" id="tablaReportes">
-                        <!-- Generado por JS -->
+                    <tbody class="divide-y divide-slate-100 text-xs" id="tablaReportes">
+                        <!-- Dinámico -->
                     </tbody>
                 </table>
             </div>
         </div>
 
+        <!-- CALIBRACIÓN Y MODELO CANAL -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="bg-slate-900 rounded-2xl p-6 text-white border border-slate-800 shadow-2xl lg:col-span-2">
+                <h3 class="text-xs font-bold text-blue-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <i data-lucide="settings" class="w-4 h-4"></i> Panel de Calibración
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Ancho de Canal (L) en Metros</label>
+                        <input type="number" id="inputAnchoL" value="1.0" step="0.1" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-xl font-bold focus:outline-none focus:border-blue-500 text-white">
+                    </div>
+                    <button id="btnApply" class="bg-blue-600 hover:bg-blue-500 font-bold py-3.5 px-6 rounded-xl uppercase text-[10px] tracking-widest transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> Aplicar Cambios
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 lg:col-span-1 flex flex-col items-center">
+                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest w-full text-left mb-6">Modelo Canal</h3>
+                <div class="relative w-32 h-64 border-x-4 border-b-4 border-slate-700 rounded-b-lg bg-slate-100 overflow-hidden shadow-inner">
+                    <!-- Indicadores de Nivel (Z-10 para estar sobre el agua) -->
+                    <div class="absolute left-0 top-0 h-full w-full z-10 flex flex-col justify-between py-2 pointer-events-none">
+                        <!-- Nivel Crítico (125cm) -->
+                        <div class="w-full border-b border-red-400 border-dashed" style="margin-top: 4%;">
+                            <span class="text-[9px] font-mono font-bold text-red-600 bg-white/80 px-1 rounded ml-1">125cm (Crítico)</span>
+                        </div>
+                        <!-- Nivel de Alerta (110cm) -->
+                        <div class="w-full border-b border-yellow-500 border-dashed" style="margin-top: 11%;">
+                            <span class="text-[9px] font-mono font-bold text-yellow-600 bg-white/80 px-1 rounded ml-1">110cm (Alerta)</span>
+                        </div>
+                        <!-- Punto Medio (65cm) -->
+                        <div class="w-full border-b border-slate-300 border-dashed opacity-50" style="margin-top: 35%;">
+                            <span class="text-[8px] font-mono text-slate-400 ml-1">65cm</span>
+                        </div>
+                        <!-- Fondo (0cm) -->
+                        <div class="w-full mt-auto">
+                            <span class="text-[8px] font-mono text-slate-400 ml-1">Fondo 0cm</span>
+                        </div>
+                    </div>
+
+                    <!-- Animación del Agua (Color dinámico gestionado por JS) -->
+                    <div id="waterLevel" class="absolute bottom-0 left-0 w-full bg-blue-500 water-fill" style="height: 0%;">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-white/20"></div>
+                    </div>
+                </div>
+                <p class="mt-4 text-[10px] font-bold text-slate-400 uppercase" id="displayL">Calibración L = 1.0m</p>
+            </div>
+        </div>
     </main>
 
     <script>
-        // Ejecutar todo cuando el HTML esté completamente cargado (Previene errores de renderizado en Canvas)
         window.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
 
-            // ==========================================
-            // 🛑 ZONA DE CONFIGURACIÓN MAESTRA 🛑
-            // ==========================================
+            // --- CONFIGURACIÓN MAESTRA ---
             const FIREBASE_URL = "https://hydrosentinel-b7ad6-default-rtdb.firebaseio.com/historial.json"; 
+            const EVIDENCE_URL = "https://hydrosentinel-b7ad6-default-rtdb.firebaseio.com/evidencia.json";
+            const PROFUNDIDAD_MAX = 130;
+            const NIVEL_ALERTA = 110;
+            const NIVEL_CRITICO = 125;
             
-            /* INSTRUCCIONES PARA LA CÁMARA:
-               Puedes poner el link directo a una imagen JPG/MJPEG o el link web de la cámara (iframe).
-               Si tu cámara no tiene, deja "default" para usar la simulación vectorial segura.
-            */
-            const CAMERA_STREAM_URL = "default"; 
-            const USE_IFRAME_FOR_CAMERA = false; 
+            let anchoL = 1.0;
+            let ultimoNivel = 0;
+            let isDemoMode = true;
 
-            const PROFUNDIDAD_MAX = 130; 
-            const NIVEL_ALERTA = 110;    
-            const NIVEL_CRITICO = 125;   
-            let anchoCanalL = 1.0;       
-            
-            let mockDataLevel = 90; 
-            let ultimoNivelCm = 0;
-
-            // --- Carga del cuadro de cámara ---
-            const camContainer = document.getElementById('cameraFeedContainer');
-            if (CAMERA_STREAM_URL !== "default") {
-                if (USE_IFRAME_FOR_CAMERA) {
-                    camContainer.innerHTML = `<iframe src="${CAMERA_STREAM_URL}" class="w-full h-full border-none" allowfullscreen></iframe>`;
-                } else {
-                    camContainer.innerHTML = `<img src="${CAMERA_STREAM_URL}" class="w-full h-full object-cover opacity-80 mix-blend-luminosity group-hover:mix-blend-normal transition-all duration-700" alt="Video Feed" />`;
-                }
-            }
-
-            // --- Manejo del Input del Ancho del Canal (L) ---
-            document.getElementById('btnGuardarL').addEventListener('click', () => {
-                let inputVal = parseFloat(document.getElementById('inputAnchoL').value);
-                let errorMsg = document.getElementById('errorL');
-                let successMsg = document.getElementById('saveSuccess');
-
-                if (!isNaN(inputVal) && inputVal > 0) {
-                    errorMsg.classList.add('hidden');
-                    anchoCanalL = inputVal;
-                    document.getElementById('displayL').innerText = `L = ${anchoCanalL}m`;
-                    
-                    if(ultimoNivelCm > 0) actualizarCaudal(ultimoNivelCm);
-
-                    successMsg.classList.remove('hidden');
-                    setTimeout(() => successMsg.classList.add('hidden'), 3000);
-
-                    // Si estamos viendo la gráfica histórica de caudal, recalcularla
-                    const histMetric = document.getElementById('histMetric');
-                    const histPeriod = document.getElementById('histPeriod');
-                    if (histMetric.value === 'caudal') {
-                        renderAdvancedChart(histPeriod.value, histMetric.value);
-                    }
-                } else {
-                    successMsg.classList.add('hidden');
-                    errorMsg.classList.remove('hidden');
-                }
-            });
-
-            function actualizarCaudal(nivelCm) {
-                let h_metros = nivelCm / 100.0;
-                if (h_metros <= 0) {
-                    document.getElementById('currentFlow').innerText = "0.000";
-                    return;
-                }
-                let caudalQ = 1.45 * anchoCanalL * Math.pow(h_metros, 1.5);
-                document.getElementById('currentFlow').innerText = caudalQ.toFixed(3);
-            }
-
-            // --- Gráfica de Tiempo Real (Chart.js) ---
-            const ctx = document.getElementById('telemetryChart').getContext('2d');
-            const telemetryChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: [], 
-                    datasets: [{
-                        label: 'Nivel (cm)',
-                        data: [],
-                        borderColor: '#2563eb',
-                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                        borderWidth: 3,
-                        pointBackgroundColor: '#1e40af',
-                        pointRadius: 3,
-                        pointHoverRadius: 6,
-                        fill: true,
-                        tension: 0.3
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: { beginAtZero: true, max: PROFUNDIDAD_MAX, grid: { color: '#f1f5f9' } },
-                        x: { grid: { display: false }, ticks: { maxTicksLimit: 15 } }
-                    },
-                    plugins: { legend: { display: false } },
-                    animation: { duration: 500 }
-                }
-            });
-
-            // Reloj Cámara
-            setInterval(() => {
-                const now = new Date();
-                document.getElementById('camTimestamp').innerText = now.toISOString().replace('T', ' ').substring(0, 19);
-            }, 1000);
-
-            // --- Fetch Firebase ---
-            async function fetchCloudData() {
-                try {
-                    const response = await fetch(FIREBASE_URL + "?nocache=" + new Date().getTime());
-                    if (!response.ok) throw new Error(`Error HTTP`);
-                    const data = await response.json();
-                    
-                    if (data && typeof data === 'object') {
-                        document.getElementById('connectionStatus').innerText = "Nube Conectada";
-                        document.getElementById('statusDot').className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]";
-                        procesarDatos(data);
-                    } else {
-                        throw new Error("Base vacía");
-                    }
-                } catch (error) {
-                    document.getElementById('connectionStatus').innerText = "Modo Demo Activo";
-                    document.getElementById('statusDot').className = "w-2.5 h-2.5 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.8)]";
-                    
-                    mockDataLevel += (Math.random() * 12) - 4; 
-                    if(mockDataLevel > PROFUNDIDAD_MAX) mockDataLevel = PROFUNDIDAD_MAX;
-                    if(mockDataLevel < 0) mockDataLevel = 0;
-                    procesarDatoIndividual(Math.round(mockDataLevel));
-                }
-            }
-
-            function procesarDatos(historialData) {
-                const lecturas = Object.values(historialData);
-                if (lecturas.length === 0) return;
-                const ultimaLectura = lecturas[lecturas.length - 1];
-                
-                actualizarUI(ultimaLectura.nivel);
-
-                const muestrasParaGraficar = lecturas.slice(-20);
-                telemetryChart.data.labels = muestrasParaGraficar.map((_, i) => `T-${muestrasParaGraficar.length - i}`);
-                telemetryChart.data.datasets[0].data = muestrasParaGraficar.map(d => d.nivel);
-                telemetryChart.update();
-            }
-
-            function procesarDatoIndividual(nivel) {
-                actualizarUI(nivel);
-                
-                const ahora = new Date();
-                const timeLabel = ahora.getHours() + ':' + ahora.getMinutes().toString().padStart(2, '0') + ':' + ahora.getSeconds().toString().padStart(2, '0');
-                
-                telemetryChart.data.labels.push(timeLabel);
-                telemetryChart.data.datasets[0].data.push(nivel);
-                if (telemetryChart.data.labels.length > 20) {
-                    telemetryChart.data.labels.shift();
-                    telemetryChart.data.datasets[0].data.shift();
-                }
-                telemetryChart.update();
-            }
-
-            function actualizarUI(nivelActual) {
-                ultimoNivelCm = nivelActual;
-                
-                document.getElementById('currentLevel').innerText = nivelActual;
-                document.getElementById('lastSync').innerText = new Date().toLocaleTimeString();
-                actualizarCaudal(nivelActual);
-
-                let statusEl = document.getElementById('systemStatus');
-                let descEl = document.getElementById('statusDesc');
-                let iconEl = document.getElementById('statusIcon');
-                let waterDiv = document.getElementById('waterLevel');
-                let camOverlay = document.getElementById('camOverlay');
-                let camOverlayText1 = document.getElementById('camOverlayText1');
-                let camOverlayText2 = document.getElementById('camOverlayText2');
-
-                let porcentaje = (nivelActual / PROFUNDIDAD_MAX) * 100;
-                waterDiv.style.height = `${Math.min(Math.max(porcentaje, 0), 100)}%`;
-
-                if (nivelActual >= NIVEL_CRITICO) {
-                    statusEl.innerText = "ALERTA CRÍTICA";
-                    statusEl.className = "text-xl font-bold text-red-600";
-                    descEl.innerText = "Posible desbordamiento";
-                    iconEl.className = "p-3 bg-red-100 rounded-xl text-red-600 animate-pulse";
-                    iconEl.innerHTML = '<i data-lucide="alert-triangle" class="w-8 h-8"></i>';
-                    waterDiv.className = "absolute bottom-0 left-0 w-full bg-red-500 water-fill shadow-[0_-4px_12px_rgba(239,68,68,0.5)]";
-                    
-                    camOverlay.className = "absolute bottom-4 right-4 md:bottom-6 md:right-6 text-red-400 font-mono text-[10px] md:text-xs font-bold bg-black/80 px-3 py-2 md:px-4 md:py-2 border border-red-500 rounded backdrop-blur-md animate-pulse";
-                    camOverlayText1.innerText = "¡PELIGRO INMINENTE!";
-                    camOverlayText2.innerText = `NIVEL: ${nivelActual}cm (CRÍTICO)`;
-
-                } else if (nivelActual >= NIVEL_ALERTA) {
-                    statusEl.innerText = "PRECAUCIÓN";
-                    statusEl.className = "text-xl font-bold text-yellow-600";
-                    descEl.innerText = "Nivel anormalmente elevado";
-                    iconEl.className = "p-3 bg-yellow-100 rounded-xl text-yellow-600";
-                    iconEl.innerHTML = '<i data-lucide="alert-circle" class="w-8 h-8"></i>';
-                    waterDiv.className = "absolute bottom-0 left-0 w-full bg-yellow-400 water-fill shadow-[0_-4px_12px_rgba(250,204,21,0.5)]";
-                    
-                    camOverlay.className = "absolute bottom-4 right-4 md:bottom-6 md:right-6 text-yellow-400 font-mono text-[10px] md:text-xs font-bold bg-black/70 px-3 py-2 md:px-4 md:py-2 border border-yellow-500/50 rounded backdrop-blur-md";
-                    camOverlayText1.innerText = "ADVERTENCIA OPERATIVA";
-                    camOverlayText2.innerText = `NIVEL: ${nivelActual}cm (ALTO)`;
-
-                } else {
-                    statusEl.innerText = "ESTABLE";
-                    statusEl.className = "text-xl font-bold text-emerald-600";
-                    descEl.innerText = "Parámetros normales";
-                    iconEl.className = "p-3 bg-emerald-100 rounded-xl text-emerald-600";
-                    iconEl.innerHTML = '<i data-lucide="check-circle" class="w-8 h-8"></i>';
-                    waterDiv.className = "absolute bottom-0 left-0 w-full bg-blue-500 water-fill shadow-[0_-4px_12px_rgba(59,130,246,0.5)]";
-                    
-                    camOverlay.className = "absolute bottom-4 right-4 md:bottom-6 md:right-6 text-emerald-400 font-mono text-[10px] md:text-xs font-bold bg-black/60 px-3 py-2 md:px-4 md:py-2 border border-emerald-500/30 rounded backdrop-blur-md";
-                    camOverlayText1.innerText = "FLUJO: NORMAL";
-                    camOverlayText2.innerText = `NIVEL: ${nivelActual}cm`;
-                }
-                lucide.createIcons();
-            }
-
-            // ==========================================
-            // 🛑 EXPLORADOR DE DATOS HISTÓRICOS 🛑
-            // ==========================================
-            
-            // Generar Base de Datos Histórica Simulada (1 Año)
-            const historicalDatabase = [];
-            const baseDate = new Date();
-            for (let i = 365; i >= 0; i--) {
-                let d = new Date(baseDate);
-                d.setDate(d.getDate() - i);
-                
-                // Simular estacionalidad y lluvia
-                let baseLevel = 50 + Math.sin(i / 40) * 30; 
-                let noise = (Math.random() * 15) - 5;
-                let finalLevel = Math.max(0, Math.min(PROFUNDIDAD_MAX, baseLevel + noise));
-                
-                historicalDatabase.push({
-                    date: d,
-                    nivelPromedio: finalLevel.toFixed(1),
-                    nivelMaximo: (finalLevel + Math.random() * 15).toFixed(1),
-                });
-            }
-
-            // Inicializar la gráfica histórica
-            const ctxHist = document.getElementById('advancedHistoricalChart').getContext('2d');
+            // --- GRÁFICA ---
+            const ctxHist = document.getElementById('advancedHistoricalChart')?.getContext('2d');
             let advancedChart = new Chart(ctxHist, {
                 type: 'line',
                 data: { labels: [], datasets: [] },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    scales: {
-                        y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
-                        x: { grid: { display: false } }
-                    },
-                    plugins: { 
-                        legend: { display: true, position: 'top', labels: { usePointStyle: true, boxWidth: 8 } },
-                        tooltip: { mode: 'index', intersect: false }
-                    }
+                    scales: { y: { beginAtZero: true, max: PROFUNDIDAD_MAX, grid: { color: '#f1f5f9' } }, x: { grid: { display: false } } },
+                    plugins: { legend: { display: true, position: 'top', labels: { usePointStyle: true, boxWidth: 6, font: { size: 10 } } } }
                 }
             });
 
-            // Función de Renderizado Dinámico
-            function renderAdvancedChart(period, metric) {
-                let filteredData = [];
-                
-                // Filtros de fecha
-                if (period === '7d') filteredData = historicalDatabase.slice(-7);
-                else if (period === '1m') filteredData = historicalDatabase.slice(-30);
-                else if (period === '3m') filteredData = historicalDatabase.slice(-90);
-                else if (period === '1y') filteredData = historicalDatabase;
-                else if (period === 'custom') {
-                    let start = new Date(document.getElementById('dateStart').value);
-                    let end = new Date(document.getElementById('dateEnd').value);
-                    if(start && end && start <= end) {
-                        end.setHours(23, 59, 59);
-                        filteredData = historicalDatabase.filter(d => d.date >= start && d.date <= end);
-                    } else {
-                        filteredData = historicalDatabase.slice(-30); 
-                    }
-                }
-
-                let labels = [];
-                let data1 = [];
-                let data2 = []; 
-
-                // Si es un año, agrupar por mes en diagrama de barras
-                if (period === '1y') {
-                    advancedChart.config.type = 'bar';
-                    const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-                    let monthlyData = {};
-                    
-                    filteredData.forEach(d => {
-                        let m = d.date.getMonth();
-                        if(!monthlyData[m]) monthlyData[m] = { sum: 0, count: 0, max: 0 };
-                        monthlyData[m].sum += parseFloat(d.nivelPromedio);
-                        monthlyData[m].count++;
-                        if(parseFloat(d.nivelMaximo) > monthlyData[m].max) monthlyData[m].max = parseFloat(d.nivelMaximo);
-                    });
-                    
-                    for(let i=0; i<12; i++) {
-                        if(monthlyData[i]) {
-                            labels.push(months[i]);
-                            data1.push((monthlyData[i].sum / monthlyData[i].count).toFixed(1));
-                            data2.push(monthlyData[i].max.toFixed(1));
-                        }
-                    }
-                } else {
-                    advancedChart.config.type = 'line';
-                    filteredData.forEach(d => {
-                        labels.push(d.date.toLocaleDateString('es-ES', { month: 'short', day: 'numeric' }));
-                        data1.push(d.nivelPromedio);
-                        data2.push(d.nivelMaximo);
-                    });
-                }
-
-                // Configurar Métrica (Nivel vs Caudal)
-                let datasets = [];
-                if (metric === 'nivel') {
-                    datasets = [
-                        {
-                            label: 'Nivel Promedio (cm)',
-                            data: data1,
-                            borderColor: '#3b82f6',
-                            backgroundColor: period === '1y' ? '#3b82f6' : 'rgba(59, 130, 246, 0.1)',
-                            borderWidth: 2,
-                            fill: period !== '1y',
-                            tension: 0.3
-                        },
-                        {
-                            label: 'Picos Máximos (cm)',
-                            data: data2,
-                            borderColor: '#ef4444',
-                            backgroundColor: period === '1y' ? '#ef4444' : 'transparent',
-                            borderWidth: 2,
-                            borderDash: period === '1y' ? [] : [5, 5],
-                            tension: 0.3,
-                            type: period === '1y' ? 'bar' : 'line'
-                        }
-                    ];
-                } else if (metric === 'caudal') {
-                    let caudalData = data1.map(h => (1.45 * anchoCanalL * Math.pow(h / 100.0, 1.5)).toFixed(3));
-                    datasets = [{
-                        label: `Caudal Histórico (m³/s) [L=${anchoCanalL}m]`,
-                        data: caudalData,
-                        borderColor: '#06b6d4',
-                        backgroundColor: period === '1y' ? '#06b6d4' : 'rgba(6, 182, 212, 0.2)',
-                        borderWidth: 2,
-                        fill: period !== '1y',
-                        tension: 0.3
-                    }];
-                }
-
-                advancedChart.data.labels = labels;
-                advancedChart.data.datasets = datasets;
-                advancedChart.update();
+            // --- DB LOCAL DEMO ---
+            const historicalDatabase = [];
+            const baseDate = new Date();
+            for (let i = 365; i >= 0; i--) {
+                let d = new Date(baseDate);
+                d.setDate(d.getDate() - i);
+                let val = 50 + Math.sin(i / 20) * 25 + (Math.random() * 10);
+                historicalDatabase.push({
+                    date: d,
+                    nivelPromedio: Math.max(0, val).toFixed(1),
+                    nivelMaximo: (val + 10).toFixed(1),
+                });
             }
 
-            // Conectar UI del Historial
-            const histPeriod = document.getElementById('histPeriod');
-            const customDateRange = document.getElementById('customDateRange');
-            const histMetric = document.getElementById('histMetric');
-            const btnApplyCustomDate = document.getElementById('btnApplyCustomDate');
+            function updateUI(nivel, statusLabel, dotColor) {
+                ultimoNivel = nivel;
+                const now = new Date();
+                const timeString = now.toLocaleTimeString();
 
-            let dEnd = new Date();
-            let dStart = new Date();
-            dStart.setDate(dEnd.getDate() - 15);
-            document.getElementById('dateStart').valueAsDate = dStart;
-            document.getElementById('dateEnd').valueAsDate = dEnd;
+                const elLevel = document.getElementById('currentLevel');
+                const elStatus = document.getElementById('connectionStatus');
+                const elDot = document.getElementById('statusDot');
+                const elSync = document.getElementById('lastSync');
+                const elCamTime = document.getElementById('camTime');
+                
+                if (elLevel) elLevel.innerText = nivel;
+                if (elStatus) elStatus.innerText = statusLabel;
+                if (elDot) elDot.className = `w-2.5 h-2.5 rounded-full animate-pulse ${dotColor}`;
+                if (elSync) elSync.innerText = timeString;
+                if (elCamTime) elCamTime.innerText = `REC ${timeString}`;
 
-            histPeriod.addEventListener('change', (e) => {
-                if (e.target.value === 'custom') {
-                    customDateRange.classList.remove('hidden');
-                    customDateRange.classList.add('flex');
-                } else {
-                    customDateRange.classList.add('hidden');
-                    customDateRange.classList.remove('flex');
-                    renderAdvancedChart(e.target.value, histMetric.value);
-                }
-            });
+                let hMetros = nivel / 100.0;
+                let q = (hMetros <= 0) ? 0 : 1.45 * anchoL * Math.pow(hMetros, 1.5);
+                const flow = document.getElementById('currentFlow');
+                if (flow) flow.innerText = q.toFixed(3);
 
-            histMetric.addEventListener('change', (e) => {
-                renderAdvancedChart(histPeriod.value, e.target.value);
-            });
+                // --- LÓGICA DE CANAL CON INDICADORES Y COLOR DINÁMICO ---
+                const water = document.getElementById('waterLevel');
+                const stTitle = document.getElementById('systemStatus');
+                const badge = document.getElementById('liveBadge');
 
-            btnApplyCustomDate.addEventListener('click', () => {
-                renderAdvancedChart('custom', histMetric.value);
-            });
-
-            // Iniciar gráfica histórica
-            renderAdvancedChart('1m', 'nivel');
-
-
-            // --- Tabla de Reportes ---
-            function poblarTablaReportes() {
-                const tabla = document.getElementById('tablaReportes');
-                let filas = '';
-                for(let i=0; i<5; i++) {
-                    let d = new Date();
-                    d.setDate(d.getDate() - i);
-                    let fechaStr = d.toLocaleDateString('es-ES', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+                if (water) {
+                    water.style.height = `${(nivel / PROFUNDIDAD_MAX) * 100}%`;
                     
-                    let hProm = (Math.random() * 20 + 40).toFixed(1); 
-                    let hMax = (parseFloat(hProm) + Math.random() * 30).toFixed(1); 
-                    let qProm = (1.45 * 1.0 * Math.pow(parseFloat(hProm)/100, 1.5)).toFixed(3);
-                    
-                    let estado = parseFloat(hMax) > 110 
-                        ? '<span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs font-bold">Precaución</span>' 
-                        : '<span class="bg-emerald-100 text-emerald-700 px-2 py-1 rounded text-xs font-bold">Normal</span>';
-
-                    filas += `
-                    <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="px-6 py-4 font-medium text-slate-700">${fechaStr}</td>
-                        <td class="px-6 py-4">${hProm} cm</td>
-                        <td class="px-6 py-4 text-slate-500">${hMax} cm</td>
-                        <td class="px-6 py-4 font-mono font-bold text-cyan-600">${qProm} m³/s</td>
-                        <td class="px-6 py-4">${estado}</td>
-                    </tr>`;
+                    if (nivel >= NIVEL_CRITICO) {
+                        water.className = "absolute bottom-0 left-0 w-full bg-red-500 water-fill shadow-inner";
+                        if (stTitle) { stTitle.innerText = "ALERTA CRÍTICA"; stTitle.className = "text-xl font-bold text-red-600"; }
+                        if (badge) { badge.className = "text-[10px] font-bold text-red-500 flex items-center gap-1"; badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span> ALERTA'; }
+                    } else if (nivel >= NIVEL_ALERTA) {
+                        water.className = "absolute bottom-0 left-0 w-full bg-yellow-500 water-fill shadow-inner";
+                        if (stTitle) { stTitle.innerText = "PRECAUCIÓN"; stTitle.className = "text-xl font-bold text-yellow-600"; }
+                        if (badge) { badge.className = "text-[10px] font-bold text-yellow-500 flex items-center gap-1"; badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"></span> NIVEL ALTO'; }
+                    } else {
+                        water.className = "absolute bottom-0 left-0 w-full bg-blue-500 water-fill shadow-inner";
+                        if (stTitle) { stTitle.innerText = "ESTADO NORMAL"; stTitle.className = "text-xl font-bold text-emerald-600"; }
+                        if (badge) { badge.className = "text-[10px] font-bold text-emerald-500 flex items-center gap-1"; badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> LIVE'; }
+                    }
                 }
-                tabla.innerHTML = filas;
                 lucide.createIcons();
             }
 
-            poblarTablaReportes();
-            fetchCloudData();
-            setInterval(fetchCloudData, 5000); 
+            async function fetchData() {
+                try {
+                    const res = await fetch(FIREBASE_URL + "?limitToLast=1&nocache=" + new Date().getTime());
+                    const data = await res.json();
+                    if (data && typeof data === 'object') {
+                        isDemoMode = false;
+                        const ultima = Object.values(data)[0];
+                        updateUI(ultima.nivel, "Nube Conectada", "bg-emerald-500");
+                    } else { throw new Error("Vacio"); }
+
+                    const resEv = await fetch(EVIDENCE_URL);
+                    const evidence = await resEv.json();
+                    if (evidence && evidence.last_photo) showEvidence(evidence.last_photo, evidence.timestamp);
+
+                } catch (e) {
+                    isDemoMode = true;
+                    runDemo();
+                }
+            }
+
+            function runDemo() {
+                if (!isDemoMode) return;
+                let level = 50 + Math.sin(Date.now()/5000)*25 + Math.random()*5;
+                updateUI(Math.round(Math.max(0, level)), "Modo Demo Activo", "bg-purple-500");
+            }
+
+            function showEvidence(b64, ts) {
+                const img = document.getElementById('evidenceImage');
+                const placeholder = document.getElementById('evidencePlaceholder');
+                const dataBox = document.getElementById('evidenceData');
+                if (img && b64) {
+                    img.src = "data:image/jpeg;base64," + b64;
+                    img.classList.remove('hidden');
+                    if (placeholder) placeholder.classList.add('hidden');
+                    if (dataBox) dataBox.classList.remove('hidden');
+                    document.getElementById('evidenceDate').innerText = ts || new Date().toLocaleString();
+                }
+            }
+
+            // --- RECARGA ---
+            fetchData();
+            setInterval(fetchData, 10000); 
         });
     </script>
 </body>
