@@ -25,7 +25,6 @@
 <body class="bg-slate-50 min-h-screen text-slate-800 font-sans pb-12">
 
     <!-- confirmacion: NEITHER Mermaid JS NOR SVG were used in this output. -->
-    <!-- Plan: Se añade selector de rango de fechas personalizado al explorador histórico sin alterar la lógica de telemetría previa. -->
 
     <!-- Barra de Navegación -->
     <nav class="bg-slate-900 text-white shadow-xl p-4 border-b-4 border-blue-600 sticky top-0 z-50">
@@ -97,13 +96,9 @@
                         <span class="font-mono text-[10px] tracking-widest opacity-50 uppercase">Esperando enlace de video real...</span>
                     </div>
                     <div class="absolute inset-0 crt-scanline opacity-20 pointer-events-none"></div>
-                    <!-- Reloj del video sincronizado -->
                     <div class="absolute top-4 left-4 text-white font-mono text-[10px] bg-black/70 px-3 py-1.5 border border-white/10 rounded flex items-center gap-2" id="camTimeContainer">
                         <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
                         <span id="camTime">REC --:--:--</span>
-                    </div>
-                    <div id="camOverlay" class="absolute bottom-4 right-4 text-emerald-400 font-mono text-[10px] bg-black/70 px-3 py-2 border border-emerald-500/50 rounded backdrop-blur-md">
-                        MODO: MONITORIZACIÓN
                     </div>
                 </div>
             </div>
@@ -214,27 +209,20 @@
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 lg:col-span-1 flex flex-col items-center">
                 <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest w-full text-left mb-6">Modelo Canal</h3>
                 <div class="relative w-32 h-64 border-x-4 border-b-4 border-slate-700 rounded-b-lg bg-slate-100 overflow-hidden shadow-inner">
-                    <!-- Indicadores de Nivel (Z-10 para estar sobre el agua) -->
                     <div class="absolute left-0 top-0 h-full w-full z-10 flex flex-col justify-between py-2 pointer-events-none">
-                        <!-- Nivel Crítico (125cm) -->
                         <div class="w-full border-b border-red-400 border-dashed" style="margin-top: 4%;">
                             <span class="text-[9px] font-mono font-bold text-red-600 bg-white/80 px-1 rounded ml-1">125cm (Crítico)</span>
                         </div>
-                        <!-- Nivel de Alerta (110cm) -->
                         <div class="w-full border-b border-yellow-500 border-dashed" style="margin-top: 11%;">
                             <span class="text-[9px] font-mono font-bold text-yellow-600 bg-white/80 px-1 rounded ml-1">110cm (Alerta)</span>
                         </div>
-                        <!-- Punto Medio (65cm) -->
                         <div class="w-full border-b border-slate-300 border-dashed opacity-50" style="margin-top: 35%;">
                             <span class="text-[8px] font-mono text-slate-400 ml-1">65cm</span>
                         </div>
-                        <!-- Fondo (0cm) -->
                         <div class="w-full mt-auto">
                             <span class="text-[8px] font-mono text-slate-400 ml-1">Fondo 0cm</span>
                         </div>
                     </div>
-
-                    <!-- Animación del Agua (Color dinámico gestionado por JS) -->
                     <div id="waterLevel" class="absolute bottom-0 left-0 w-full bg-blue-500 water-fill" style="height: 0%;">
                         <div class="absolute top-0 left-0 w-full h-1 bg-white/20"></div>
                     </div>
@@ -272,37 +260,25 @@
                             beginAtZero: true, 
                             max: PROFUNDIDAD_MAX, 
                             grid: { color: '#f1f5f9' },
-                            ticks: {
-                                font: { size: 10 }
-                            }
+                            ticks: { font: { size: 10 } }
                         }, 
                         x: { 
                             grid: { display: false },
-                            ticks: {
-                                font: { size: 10 }
-                            }
+                            ticks: { font: { size: 10 } }
                         } 
                     },
                     plugins: { 
                         legend: { 
                             display: true, 
                             position: 'top', 
-                            labels: { 
-                                usePointStyle: true, 
-                                boxWidth: 6,
-                                font: { size: 10 }
-                            } 
+                            labels: { usePointStyle: true, boxWidth: 6, font: { size: 10 } } 
                         },
                         tooltip: {
                             callbacks: {
                                 title: function(tooltipItems) {
                                     const item = tooltipItems[0];
                                     let label = item.chart.data.labels[item.dataIndex];
-                                    if (Array.isArray(label)) {
-                                      return label.join(' ');
-                                    } else {
-                                      return label;
-                                    }
+                                    return Array.isArray(label) ? label.join(' ') : label;
                                 }
                             }
                         }
@@ -310,7 +286,7 @@
                 }
             });
 
-            // --- DB LOCAL DEMO (Generación de 1 año de datos ficticios) ---
+            // --- DB LOCAL DEMO ---
             const historicalDatabase = [];
             const baseDate = new Date();
             for (let i = 365; i >= 0; i--) {
@@ -324,11 +300,8 @@
                 });
             }
 
-            // --- FUNCIÓN DE RENDERIZADO DE GRÁFICA ---
             function renderAdvancedChart(period, metric) {
                 let filteredData = [];
-                const now = new Date();
-                
                 if (period === '7d') filteredData = historicalDatabase.slice(-7);
                 else if (period === '1m') filteredData = historicalDatabase.slice(-30);
                 else if (period === '3m') filteredData = historicalDatabase.slice(-90);
@@ -336,11 +309,7 @@
                 else if (period === 'custom') {
                     const from = new Date(document.getElementById('dateFrom').value);
                     const to = new Date(document.getElementById('dateTo').value);
-                    if (!isNaN(from) && !isNaN(to)) {
-                        filteredData = historicalDatabase.filter(d => d.date >= from && d.date <= to);
-                    } else {
-                        filteredData = historicalDatabase.slice(-30);
-                    }
+                    filteredData = (!isNaN(from) && !isNaN(to)) ? historicalDatabase.filter(d => d.date >= from && d.date <= to) : historicalDatabase.slice(-30);
                 }
 
                 let labels = [];
@@ -378,35 +347,16 @@
                 let datasets = [];
                 if (metric === 'nivel') {
                     datasets = [
-                        { 
-                            label: 'Promedio (cm)', 
-                            data: data1, 
-                            borderColor: '#3b82f6', 
-                            backgroundColor: period === '1y' ? '#3b82f6' : 'rgba(59, 130, 246, 0.1)', 
-                            fill: period !== '1y', 
-                            tension: 0.3 
-                        },
-                        { 
-                            label: 'Pico Máx (cm)', 
-                            data: data2, 
-                            borderColor: '#ef4444', 
-                            backgroundColor: '#ef4444', 
-                            type: period === '1y' ? 'bar' : 'line', 
-                            borderDash: [5, 5],
-                            pointRadius: 0
-                        }
+                        { label: 'Promedio (cm)', data: data1, borderColor: '#3b82f6', backgroundColor: period === '1y' ? '#3b82f6' : 'rgba(59, 130, 246, 0.1)', fill: period !== '1y', tension: 0.3 },
+                        { label: 'Pico Máx (cm)', data: data2, borderColor: '#ef4444', backgroundColor: '#ef4444', type: period === '1y' ? 'bar' : 'line', borderDash: [5, 5], pointRadius: 0 }
                     ];
                     advancedChart.options.scales.y.max = PROFUNDIDAD_MAX;
                 } else {
-                    let caudalData = data1.map(h => (1.45 * anchoL * Math.pow(h / 100.0, 1.5)).toFixed(3));
-                    datasets = [{ 
-                        label: 'Caudal (m³/s)', 
-                        data: caudalData, 
-                        borderColor: '#06b6d4', 
-                        backgroundColor: 'rgba(6, 182, 212, 0.1)', 
-                        fill: true, 
-                        tension: 0.3 
-                    }];
+                    let caudalData = data1.map(h => {
+                        let val = parseFloat(h);
+                        return isNaN(val) ? 0 : (1.45 * anchoL * Math.pow(val / 100.0, 1.5)).toFixed(3);
+                    });
+                    datasets = [{ label: 'Caudal (m³/s)', data: caudalData, borderColor: '#06b6d4', backgroundColor: 'rgba(6, 182, 212, 0.1)', fill: true, tension: 0.3 }];
                     advancedChart.options.scales.y.max = null;
                 }
 
@@ -419,17 +369,18 @@
             function poblarTabla(data) {
                 const tbody = document.getElementById('tablaReportes');
                 let rows = '';
-                // Mostrar solo los últimos 15 del set filtrado
                 data.slice(-15).reverse().forEach(d => {
-                    let q = (1.45 * anchoL * Math.pow(parseFloat(d.nivelPromedio)/100, 1.5)).toFixed(3);
-                    let nivelMax = parseFloat(d.nivelMaximo);
+                    let nProm = parseFloat(d.nivelPromedio);
+                    if(isNaN(nProm)) nProm = 0;
+                    let q = (1.45 * anchoL * Math.pow(nProm/100, 1.5)).toFixed(3);
+                    let nivelMax = parseFloat(d.nivelMaximo) || 0;
                     let estadoClass = nivelMax >= NIVEL_CRITICO ? 'bg-red-100 text-red-700' : (nivelMax >= NIVEL_ALERTA ? 'bg-yellow-100 text-yellow-700' : 'bg-emerald-100 text-emerald-700');
                     let estadoTxt = nivelMax >= NIVEL_CRITICO ? 'Crítico' : (nivelMax >= NIVEL_ALERTA ? 'Alerta' : 'Normal');
                     
                     rows += `<tr class="hover:bg-slate-50">
                         <td class="px-6 py-4 font-medium">${d.date.toLocaleDateString()}</td>
-                        <td class="px-6 py-4">${d.nivelPromedio} cm</td>
-                        <td class="px-6 py-4 font-bold">${d.nivelMaximo} cm</td>
+                        <td class="px-6 py-4">${nProm} cm</td>
+                        <td class="px-6 py-4 font-bold">${nivelMax} cm</td>
                         <td class="px-6 py-4 text-cyan-600 font-mono font-bold">${q}</td>
                         <td class="px-6 py-4"><span class="px-2 py-0.5 rounded-full font-bold uppercase text-[9px] ${estadoClass}">${estadoTxt}</span></td>
                     </tr>`;
@@ -437,10 +388,16 @@
                 if(tbody) tbody.innerHTML = rows;
             }
 
-            function updateUI(nivel, statusLabel, dotColor) {
+            function updateUI(nivelInput, statusLabel, dotColor) {
+                // GUARDIA DE DATOS: Aseguramos que el nivel sea un número válido
+                let nivel = parseFloat(nivelInput);
+                if (isNaN(nivel)) {
+                    console.warn("Dato de nivel no válido recibido:", nivelInput);
+                    return; 
+                }
+
                 ultimoNivel = nivel;
-                const now = new Date();
-                const timeString = now.toLocaleTimeString();
+                const timeString = new Date().toLocaleTimeString();
 
                 const elLevel = document.getElementById('currentLevel');
                 const elStatus = document.getElementById('connectionStatus');
@@ -454,31 +411,27 @@
                 if (elSync) elSync.innerText = timeString;
                 if (elCamTime) elCamTime.innerText = `REC ${timeString}`;
 
+                // Cálculo de Caudal seguro
                 let hMetros = nivel / 100.0;
                 let q = (hMetros <= 0) ? 0 : 1.45 * anchoL * Math.pow(hMetros, 1.5);
                 const flow = document.getElementById('currentFlow');
                 if (flow) flow.innerText = q.toFixed(3);
 
-                // --- LÓGICA DE CANAL CON INDICADORES Y COLOR DINÁMICO ---
                 const water = document.getElementById('waterLevel');
                 const stTitle = document.getElementById('systemStatus');
                 const badge = document.getElementById('liveBadge');
 
                 if (water) {
                     water.style.height = `${(nivel / PROFUNDIDAD_MAX) * 100}%`;
-                    
                     if (nivel >= NIVEL_CRITICO) {
                         water.className = "absolute bottom-0 left-0 w-full bg-red-500 water-fill shadow-inner";
-                        if (stTitle) { stTitle.innerText = "ALERTA CRÍTICA"; stTitle.className = "text-xl font-bold text-red-600"; }
-                        if (badge) { badge.className = "text-[10px] font-bold text-red-500 flex items-center gap-1"; badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span> ALERTA'; }
+                        if (stTitle) stTitle.innerText = "ALERTA CRÍTICA";
                     } else if (nivel >= NIVEL_ALERTA) {
                         water.className = "absolute bottom-0 left-0 w-full bg-yellow-500 water-fill shadow-inner";
-                        if (stTitle) { stTitle.innerText = "PRECAUCIÓN"; stTitle.className = "text-xl font-bold text-yellow-600"; }
-                        if (badge) { badge.className = "text-[10px] font-bold text-yellow-500 flex items-center gap-1"; badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"></span> NIVEL ALTO'; }
+                        if (stTitle) stTitle.innerText = "PRECAUCIÓN";
                     } else {
                         water.className = "absolute bottom-0 left-0 w-full bg-blue-500 water-fill shadow-inner";
-                        if (stTitle) { stTitle.innerText = "ESTADO NORMAL"; stTitle.className = "text-xl font-bold text-emerald-600"; }
-                        if (badge) { badge.className = "text-[10px] font-bold text-emerald-500 flex items-center gap-1"; badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> LIVE'; }
+                        if (stTitle) stTitle.innerText = "ESTADO NORMAL";
                     }
                 }
                 lucide.createIcons();
@@ -491,67 +444,45 @@
                     if (data && typeof data === 'object') {
                         isDemoMode = false;
                         const ultima = Object.values(data)[0];
-                        updateUI(ultima.nivel, "Nube Conectada", "bg-emerald-500");
-                    } else { throw new Error("Vacio"); }
-
-                    const resEv = await fetch(EVIDENCE_URL);
-                    const evidence = await resEv.json();
-                    if (evidence && evidence.last_photo) showEvidence(evidence.last_photo, evidence.timestamp);
-
+                        // Verificación de propiedad nivel en el objeto de Firebase
+                        if (ultima && ultima.hasOwnProperty('nivel')) {
+                            updateUI(ultima.nivel, "Nube Conectada", "bg-emerald-500");
+                        }
+                    }
                 } catch (e) {
                     isDemoMode = true;
-                    runDemo();
                 }
             }
 
             function runDemo() {
                 if (!isDemoMode) return;
                 let level = 50 + Math.sin(Date.now()/5000)*25 + Math.random()*5;
-                updateUI(Math.round(Math.max(0, level)), "Modo Demo Activo", "bg-purple-500");
-            }
+                let nivelRedondeado = Math.round(Math.max(0, level));
+                updateUI(nivelRedondeado, "Modo Demo Activo", "bg-purple-500");
 
-            function showEvidence(b64, ts) {
-                const img = document.getElementById('evidenceImage');
-                const placeholder = document.getElementById('evidencePlaceholder');
-                const dataBox = document.getElementById('evidenceData');
-                if (img && b64) {
-                    img.src = "data:image/jpeg;base64," + b64;
-                    img.classList.remove('hidden');
-                    if (placeholder) placeholder.classList.add('hidden');
-                    if (dataBox) dataBox.classList.remove('hidden');
-                    document.getElementById('evidenceDate').innerText = ts || new Date().toLocaleString();
+                if (historicalDatabase.length > 0) {
+                    historicalDatabase[historicalDatabase.length - 1].nivelPromedio = nivelRedondeado.toFixed(1);
+                    historicalDatabase[historicalDatabase.length - 1].nivelMaximo = (nivelRedondeado + 10).toFixed(1);
+                    renderAdvancedChart(document.getElementById('histPeriod').value, document.getElementById('histMetric').value);
                 }
             }
 
-            // --- LISTENERS DE CONTROL ---
+            // LISTENERS
             document.getElementById('histPeriod').addEventListener('change', (e) => {
-                const customInputs = document.getElementById('customRangeInputs');
-                if (e.target.value === 'custom') {
-                    customInputs.classList.remove('hidden');
-                } else {
-                    customInputs.classList.add('hidden');
-                    renderAdvancedChart(e.target.value, document.getElementById('histMetric').value);
-                }
+                document.getElementById('customRangeInputs').classList.toggle('hidden', e.target.value !== 'custom');
+                if (e.target.value !== 'custom') renderAdvancedChart(e.target.value, document.getElementById('histMetric').value);
             });
-
-            document.getElementById('btnFilterCustom').addEventListener('click', () => {
-                renderAdvancedChart('custom', document.getElementById('histMetric').value);
-            });
-
-            document.getElementById('histMetric').addEventListener('change', (e) => {
-                renderAdvancedChart(document.getElementById('histPeriod').value, e.target.value);
-            });
-
+            document.getElementById('btnFilterCustom').addEventListener('click', () => renderAdvancedChart('custom', document.getElementById('histMetric').value));
+            document.getElementById('histMetric').addEventListener('change', (e) => renderAdvancedChart(document.getElementById('histPeriod').value, e.target.value));
             document.getElementById('btnApply').addEventListener('click', () => {
                 anchoL = parseFloat(document.getElementById('inputAnchoL').value) || 1.0;
                 document.getElementById('displayL').innerText = `Calibración L = ${anchoL}m`;
                 renderAdvancedChart(document.getElementById('histPeriod').value, document.getElementById('histMetric').value);
             });
 
-            // --- RECARGA INICIAL ---
             renderAdvancedChart('1m', 'nivel');
             fetchData();
-            setInterval(fetchData, 10000); 
+            setInterval(() => isDemoMode ? runDemo() : fetchData(), 5000); 
         });
     </script>
 </body>
