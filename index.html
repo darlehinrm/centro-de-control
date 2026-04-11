@@ -18,24 +18,39 @@
             pointer-events: none;
         }
         .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #475569; }
+        
+        @keyframes radar-pulse {
+            0% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.2); opacity: 0.2; }
+            100% { transform: scale(1); opacity: 0.5; }
+        }
+        .radar-ring { animation: radar-pulse 3s infinite ease-in-out; }
+        
+        /* Efecto de cristal oscuro para tarjetas */
+        .glass-dark {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(51, 65, 85, 0.5);
+        }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen text-slate-800 font-sans pb-12">
+<body class="bg-slate-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0a0f1c] to-black min-h-screen text-slate-300 font-sans pb-12">
 
-    <!-- confirmacion: NEITHER Mermaid JS NOR SVG were used in this output. -->
-
-    <!-- Barra de Navegación -->
-    <nav class="bg-slate-900 text-white shadow-xl p-4 border-b-4 border-blue-600 sticky top-0 z-50">
+    <!-- Barra de Navegación Corporativa -->
+    <nav class="bg-slate-950/80 backdrop-blur-lg text-white shadow-2xl p-4 border-b border-blue-500/30 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
             <div class="flex items-center space-x-3">
-                <i data-lucide="shield-check" class="w-8 h-8 text-blue-500"></i>
-                <h1 class="text-xl md:text-2xl font-bold tracking-wider truncate">HydroSentinel <span class="hidden md:inline text-slate-400 text-sm font-normal ml-2">v3.7 NOC (Sync Pro + Indicadores)</span></h1>
+                <div class="p-2 bg-blue-500/10 rounded-lg border border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.2)]">
+                    <i data-lucide="shield-check" class="w-6 h-6 text-blue-400"></i>
+                </div>
+                <h1 class="text-xl md:text-2xl font-black tracking-wider truncate text-slate-100">HydroSentinel <span class="hidden md:inline text-blue-500 text-xs font-bold ml-2 uppercase tracking-widest px-2 py-1 bg-blue-500/10 rounded border border-blue-500/20">v3.7 NOC Analytics</span></h1>
             </div>
-            <div class="flex items-center space-x-2 bg-slate-800 px-4 py-1.5 rounded-full text-xs md:text-sm border border-slate-700">
-                <div id="statusDot" class="w-2.5 h-2.5 rounded-full bg-yellow-500 animate-pulse"></div>
-                <span class="font-medium text-slate-300 tracking-wide" id="connectionStatus">Sincronizando...</span>
+            <div class="flex items-center space-x-2 bg-slate-900 px-4 py-1.5 rounded-full text-xs md:text-sm border border-slate-800 shadow-inner">
+                <div id="statusDot" class="w-2.5 h-2.5 rounded-full bg-slate-500 animate-pulse"></div>
+                <span class="font-bold text-slate-400 tracking-wider uppercase text-[10px]" id="connectionStatus">INICIANDO NOC...</span>
             </div>
         </div>
     </nav>
@@ -44,445 +59,602 @@
         
         <!-- TELEMETRÍA SUPERIOR -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 relative">
-                <p class="text-sm font-bold text-slate-400 uppercase mb-1">Nivel (h)</p>
-                <div class="flex items-baseline space-x-2 mt-2">
-                    <h2 class="text-5xl font-black text-blue-600" id="currentLevel">--</h2>
+            <div class="glass-dark rounded-2xl shadow-xl p-6 relative group hover:border-blue-500/30 transition-colors">
+                <div class="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent rounded-2xl pointer-events-none"></div>
+                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2">
+                    <i data-lucide="activity" class="w-3 h-3 text-blue-400"></i> Nivel Actual (h)
+                </p>
+                <div class="flex items-baseline space-x-2 mt-2 relative z-10">
+                    <h2 class="text-5xl font-black text-slate-700 transition-colors duration-500 drop-shadow-lg" id="currentLevel">--</h2>
                     <span class="text-xl text-slate-500 font-bold">cm</span>
                 </div>
             </div>
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                <p class="text-sm font-bold text-slate-400 uppercase mb-1">Caudal (Q)</p>
-                <div class="flex items-baseline space-x-2 mt-2">
-                    <h2 class="text-5xl font-black text-cyan-600" id="currentFlow">--</h2>
+            <div class="glass-dark rounded-2xl shadow-xl p-6 relative group hover:border-cyan-500/30 transition-colors">
+                <div class="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-transparent rounded-2xl pointer-events-none"></div>
+                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2">
+                    <i data-lucide="waves" class="w-3 h-3 text-cyan-400"></i> Caudal (Q)
+                </p>
+                <div class="flex items-baseline space-x-2 mt-2 relative z-10">
+                    <h2 class="text-5xl font-black text-slate-700 transition-colors duration-500 drop-shadow-lg" id="currentFlow">--</h2>
                     <span class="text-xl text-slate-500 font-bold">m³/s</span>
                 </div>
             </div>
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                <p class="text-sm font-bold text-slate-400 uppercase mb-1">Estado Operativo</p>
-                <div id="statusBox" class="flex items-center space-x-3 mt-3">
-                    <div id="statusIcon" class="p-3 bg-slate-100 rounded-xl text-slate-400">
-                        <i data-lucide="loader" class="w-8 h-8 animate-spin"></i>
+            <div class="glass-dark rounded-2xl shadow-xl p-6 relative">
+                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2">
+                    <i data-lucide="server" class="w-3 h-3 text-slate-400"></i> Estado Operativo
+                </p>
+                <div id="statusBox" class="flex items-center space-x-3 mt-3 relative z-10">
+                    <div id="statusIcon" class="p-3 bg-slate-800/50 rounded-xl text-slate-500 border border-slate-700/50">
+                        <i data-lucide="refresh-cw" class="w-8 h-8 animate-spin"></i>
                     </div>
                     <div>
-                        <h2 class="text-xl font-bold text-slate-700" id="systemStatus">Evaluando...</h2>
-                        <span class="text-xs font-medium text-slate-500" id="statusDesc">Esperando datos</span>
+                        <h2 class="text-xl font-bold text-slate-400 uppercase tracking-tight" id="systemStatus">SINCRONIZANDO</h2>
+                        <span class="text-[10px] font-medium text-slate-500" id="statusDesc">Verificando enlace de red...</span>
                     </div>
                 </div>
             </div>
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                <p class="text-sm font-bold text-slate-400 uppercase mb-1">Última Sincronización</p>
-                <h2 class="text-2xl font-bold text-slate-700 mt-2" id="lastSync">--:--:--</h2>
-                <div class="w-full bg-slate-100 h-1.5 rounded-full mt-4 overflow-hidden">
-                    <div id="syncProgress" class="bg-blue-500 h-full w-full animate-pulse"></div>
+            <div class="glass-dark rounded-2xl shadow-xl p-6 relative">
+                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2">
+                    <i data-lucide="clock" class="w-3 h-3 text-slate-400"></i> Último Reporte NOC
+                </p>
+                <h2 class="text-2xl font-mono font-bold text-slate-300 mt-2 relative z-10 tracking-wider" id="lastSync">--:--:--</h2>
+                <div class="w-full bg-slate-800/80 h-1.5 rounded-full mt-4 overflow-hidden border border-slate-700/50 relative z-10">
+                    <div id="syncProgress" class="bg-slate-600 h-full w-full animate-pulse"></div>
                 </div>
             </div>
         </div>
 
         <!-- VISIÓN DUAL -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 lg:col-span-2 overflow-hidden flex flex-col">
-                <div class="flex justify-between items-center px-6 py-4 border-b border-slate-100 bg-slate-50">
-                    <h3 class="text-sm font-bold text-slate-600 uppercase flex items-center gap-2">
-                        <i data-lucide="video" class="w-4 h-4 text-blue-500"></i> Video en Vivo (Sync Stream)
+            <!-- VIDEO EN VIVO -->
+            <div class="glass-dark rounded-2xl shadow-xl lg:col-span-2 overflow-hidden flex flex-col relative">
+                <div class="flex justify-between items-center px-6 py-4 border-b border-slate-800 bg-slate-900/50">
+                    <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                        <i data-lucide="video" class="w-4 h-4 text-blue-500"></i> Video en Vivo (Cámara IP)
                     </h3>
-                    <span id="liveBadge" class="text-[10px] font-bold text-slate-400 flex items-center gap-1">
-                        <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> STANDBY
+                    <span id="liveBadge" class="text-[9px] font-bold text-slate-500 flex items-center gap-1 bg-slate-800 px-2 py-1 rounded border border-slate-700">
+                        <span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span> STANDBY
                     </span>
                 </div>
-                <div class="relative w-full bg-slate-900 aspect-video flex items-center justify-center overflow-hidden">
-                    <div id="cameraFeed" class="absolute inset-0 w-full h-full flex flex-col items-center justify-center bg-slate-800 text-slate-600">
-                        <svg class="w-20 h-20 mb-4 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                        <span class="font-mono text-[10px] tracking-widest opacity-50 uppercase">Esperando enlace de video real...</span>
+                <div id="videoContainer" class="relative w-full bg-black flex-grow aspect-video flex items-center justify-center overflow-hidden border-t border-slate-800/50">
+                    <div id="videoPlaceholder" class="absolute inset-0 flex flex-col items-center justify-center z-10">
+                        <div class="relative flex items-center justify-center mb-4">
+                            <div class="absolute w-32 h-32 border border-blue-500/20 rounded-full radar-ring"></div>
+                            <div class="absolute w-20 h-20 border border-blue-500/40 rounded-full radar-ring" style="animation-delay: 1s"></div>
+                            <i data-lucide="video-off" class="w-10 h-10 text-slate-700"></i>
+                        </div>
+                        <p class="text-slate-600 font-mono text-[10px] uppercase tracking-[0.2em] shadow-black drop-shadow-md">Esperando enlace de video...</p>
                     </div>
-                    <div class="absolute inset-0 crt-scanline opacity-20 pointer-events-none"></div>
-                    <div class="absolute top-4 left-4 text-white font-mono text-[10px] bg-black/70 px-3 py-1.5 border border-white/10 rounded flex items-center gap-2" id="camTimeContainer">
-                        <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
-                        <span id="camTime">REC --:--:--</span>
+                    <img id="ipCameraFeed" src="" class="hidden w-full h-full object-cover opacity-60" alt="Live Feed" onerror="this.classList.add('hidden'); document.getElementById('videoPlaceholder').classList.remove('hidden');">
+                    <div class="absolute inset-0 crt-scanline opacity-30 pointer-events-none"></div>
+                    <div class="absolute top-4 left-4 text-white font-mono text-[10px] bg-black/80 px-3 py-1.5 border border-white/10 rounded flex items-center gap-2 backdrop-blur-sm">
+                        <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.8)]"></span>
+                        <span id="camTime">NOC --:--:--</span>
                     </div>
                 </div>
             </div>
 
             <!-- EVIDENCIA FOTOGRÁFICA -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col overflow-hidden">
-                <div class="flex justify-between items-center px-6 py-4 border-b border-slate-100 bg-slate-50">
-                    <h3 class="text-sm font-bold text-slate-600 uppercase flex items-center gap-2">
+            <div class="glass-dark rounded-2xl shadow-xl flex flex-col overflow-hidden relative">
+                <div class="flex justify-between items-center px-6 py-4 border-b border-slate-800 bg-slate-900/50">
+                    <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
                         <i data-lucide="camera" class="w-4 h-4 text-blue-500"></i> Última Evidencia (ESP32-CAM)
                     </h3>
                 </div>
-                <div class="relative flex-grow bg-slate-800 flex items-center justify-center overflow-hidden">
-                    <img id="evidenceImage" src="" class="hidden w-full h-full object-cover" alt="Captura Real">
+                <div class="relative flex-grow bg-slate-950/80 flex items-center justify-center overflow-hidden border-t border-slate-800/50">
+                    <img id="evidenceImage" src="" class="hidden w-full h-full object-cover opacity-80 mix-blend-lighten" alt="Captura Real">
                     <div id="evidencePlaceholder" class="text-center p-6 flex flex-col items-center">
-                        <div class="w-12 h-12 bg-slate-700 rounded-full flex items-center justify-center mb-4">
-                            <i data-lucide="image" class="w-6 h-6 text-slate-500"></i>
+                        <div class="w-14 h-14 bg-slate-900 rounded-full flex items-center justify-center mb-4 border border-slate-800 shadow-inner">
+                            <i data-lucide="image" class="w-6 h-6 text-slate-600"></i>
                         </div>
-                        <p class="text-slate-400 text-[10px] font-bold uppercase">Sin capturas de alerta</p>
+                        <p class="text-slate-600 text-[9px] font-bold uppercase tracking-[0.2em] text-center px-4 leading-relaxed">Sin registro de alerta<br>en sesión actual</p>
                     </div>
-                    <div id="evidenceData" class="hidden absolute bottom-0 left-0 w-full bg-black/80 p-3">
-                        <p class="text-[9px] text-white font-mono uppercase">Registro: <span id="evidenceDate">--</span></p>
+                    <div id="evidenceData" class="hidden absolute bottom-0 left-0 w-full bg-gradient-to-t from-black to-transparent pt-8 pb-3 px-3">
+                        <p class="text-[9px] text-slate-300 font-mono uppercase tracking-widest">NOC-LOG: <span id="evidenceDate" class="text-blue-400 font-bold">--</span></p>
                     </div>
                 </div>
-                <div class="p-4 bg-slate-50 border-t border-slate-100">
-                    <button class="w-full bg-white border border-slate-300 text-slate-700 text-[10px] font-bold py-2 rounded-lg flex items-center justify-center gap-2 shadow-sm">
-                        <i data-lucide="download" class="w-3 h-3"></i> DESCARGAR EVIDENCIA
+                <div class="p-4 bg-slate-900/50 border-t border-slate-800">
+                    <button id="btnDownloadEvidence" onclick="downloadEvidence()" class="w-full bg-blue-600/90 hover:bg-blue-500 text-white text-[10px] font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(37,99,235,0.3)] transition-all active:scale-95 disabled:opacity-30 disabled:shadow-none disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed border border-blue-500/50 disabled:border-slate-700" disabled>
+                        <i data-lucide="download" class="w-4 h-4"></i> DESCARGAR EVIDENCIA (JPG)
                     </button>
+                    <p class="text-[8px] text-slate-600 text-center mt-3 font-bold uppercase tracking-widest">Auditoría Criptográfica Activa</p>
                 </div>
             </div>
         </div>
 
-        <!-- EXPLORADOR HISTÓRICO AVANZADO -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8">
+        <!-- EXPLORADOR HISTÓRICO CON FILTRO DE CALENDARIO -->
+        <div class="glass-dark rounded-2xl shadow-xl p-6 mb-8 relative z-20">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                    <i data-lucide="bar-chart-2" class="w-5 h-5 text-blue-500"></i> Explorador de Datos Históricos
+                <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <i data-lucide="bar-chart-2" class="w-4 h-4 text-blue-500"></i> Tendencia Analítica del Canal
                 </h3>
-                <div class="flex flex-wrap items-center gap-3 bg-slate-50 p-2 rounded-xl border border-slate-200">
-                    <div id="customRangeInputs" class="hidden flex items-center gap-2">
-                        <input type="date" id="dateFrom" class="bg-white border border-slate-300 text-[10px] font-bold rounded-lg px-2 py-2 outline-none">
-                        <span class="text-slate-400 text-[10px]">al</span>
-                        <input type="date" id="dateTo" class="bg-white border border-slate-300 text-[10px] font-bold rounded-lg px-2 py-2 outline-none">
-                        <button id="btnFilterCustom" class="bg-blue-600 text-white px-3 py-2 rounded-lg text-[10px] font-bold hover:bg-blue-700">Filtrar</button>
-                    </div>
-                    <select id="histPeriod" class="bg-white border border-slate-300 text-slate-700 text-[10px] font-bold rounded-lg px-3 py-2 cursor-pointer outline-none">
+                <div class="flex flex-wrap items-center gap-3 bg-slate-900/80 p-2 rounded-xl border border-slate-800 shadow-inner">
+                    <select id="histPeriod" class="bg-slate-950 border border-slate-700 text-slate-300 text-[10px] font-bold rounded-lg px-3 py-2 cursor-pointer outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors">
+                        <option value="today">Hoy (Resumen 15m)</option>
                         <option value="7d">Últimos 7 Días</option>
-                        <option value="1m" selected>Último Mes</option>
-                        <option value="3m">Último Trimestre</option>
-                        <option value="1y">Anual (Vista Grupal)</option>
-                        <option value="custom">Rango Personalizado</option>
+                        <option value="1m" selected>Último Mes (30 Días)</option>
+                        <option value="custom">Rango Personalizado 📅</option>
                     </select>
-                    <select id="histMetric" class="bg-white border border-slate-300 text-slate-700 text-[10px] font-bold rounded-lg px-3 py-2 cursor-pointer outline-none">
-                        <option value="nivel">Niveles Hidrométricos</option>
-                        <option value="caudal">Caudal Volumétrico (Q)</option>
+
+                    <div id="customDateRange" class="hidden flex items-center gap-2 border-l border-slate-700 pl-3">
+                        <input type="date" id="dateStart" class="bg-slate-950 border border-slate-700 text-slate-300 text-[10px] font-bold rounded-lg px-2 py-1.5 outline-none focus:border-blue-500 [color-scheme:dark]">
+                        <span class="text-slate-500 text-[10px] font-bold">al</span>
+                        <input type="date" id="dateEnd" class="bg-slate-950 border border-slate-700 text-slate-300 text-[10px] font-bold rounded-lg px-2 py-1.5 outline-none focus:border-blue-500 [color-scheme:dark]">
+                        <button id="btnApplyFilter" class="bg-blue-600/80 text-white px-4 py-1.5 rounded-lg text-[10px] font-bold hover:bg-blue-500 border border-blue-500/50 shadow-[0_0_10px_rgba(37,99,235,0.2)] transition-all">Aplicar</button>
+                    </div>
+
+                    <select id="histMetric" class="bg-slate-950 border border-slate-700 text-slate-300 text-[10px] font-bold rounded-lg px-3 py-2 cursor-pointer outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors">
+                        <option value="nivel">Niveles (cm)</option>
+                        <option value="caudal">Caudal (m³/s)</option>
                     </select>
                 </div>
             </div>
+
+            <!-- ETIQUETAS DE TENDENCIA (Dark mode friendly) -->
+            <div class="flex flex-wrap gap-4 mb-6 pb-6 border-b border-slate-800">
+                <div class="flex items-center gap-3 bg-blue-500/10 px-4 py-2 rounded-xl border border-blue-500/20 shadow-inner">
+                    <div class="p-1.5 bg-blue-500/20 rounded-md"><i data-lucide="activity" class="w-4 h-4 text-blue-400"></i></div>
+                    <div class="flex flex-col">
+                        <span class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Promedio Periodo</span>
+                        <span class="text-sm font-black text-blue-400 font-mono tracking-wider" id="lblAvgNivel">-- cm</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 bg-red-500/10 px-4 py-2 rounded-xl border border-red-500/20 shadow-inner">
+                    <div class="p-1.5 bg-red-500/20 rounded-md"><i data-lucide="trending-up" class="w-4 h-4 text-red-400"></i></div>
+                    <div class="flex flex-col">
+                        <span class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Pico Máximo</span>
+                        <span class="text-sm font-black text-red-400 font-mono tracking-wider" id="lblMaxPico">-- cm</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 bg-cyan-500/10 px-4 py-2 rounded-xl border border-cyan-500/20 shadow-inner">
+                    <div class="p-1.5 bg-cyan-500/20 rounded-md"><i data-lucide="waves" class="w-4 h-4 text-cyan-400"></i></div>
+                    <div class="flex flex-col">
+                        <span class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Caudal Promedio</span>
+                        <span class="text-sm font-black text-cyan-400 font-mono tracking-wider" id="lblAvgCaudal">-- m³/s</span>
+                    </div>
+                </div>
+            </div>
+
             <div class="relative h-80 w-full">
                 <canvas id="advancedHistoricalChart"></canvas>
             </div>
         </div>
 
         <!-- TABLA DE REPORTES -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-8">
-            <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                <h3 class="text-sm font-bold text-slate-600 uppercase tracking-widest flex items-center gap-2">
-                    <i data-lucide="file-text" class="w-5 h-5 text-blue-500"></i> Registro de Reportes Operativos
+        <div class="glass-dark rounded-2xl shadow-xl overflow-hidden mb-8">
+            <div class="px-6 py-5 border-b border-slate-800 bg-slate-900/50 flex justify-between items-center">
+                <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <i data-lucide="file-text" class="w-4 h-4 text-blue-500"></i> Registro Analítico Agregado
                 </h3>
-                <button class="bg-slate-800 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold hover:bg-slate-700 transition-colors flex items-center gap-1 shadow-sm">
-                    <i data-lucide="download" class="w-3 h-3"></i> EXPORTAR CSV
-                </button>
             </div>
-            <div class="overflow-x-auto custom-scrollbar">
-                <table class="w-full text-left text-sm text-slate-600 whitespace-nowrap">
-                    <thead class="bg-slate-50 text-slate-500 font-bold uppercase text-[10px]">
+            <div class="overflow-x-auto custom-scrollbar bg-slate-950/30">
+                <table class="w-full text-left text-sm whitespace-nowrap">
+                    <thead class="bg-slate-900/80 text-slate-500 font-bold uppercase text-[9px] tracking-widest border-b border-slate-800">
                         <tr>
-                            <th class="px-6 py-4">Fecha</th>
-                            <th class="px-6 py-4">Nivel Promedio (cm)</th>
-                            <th class="px-6 py-4">Pico Máximo (cm)</th>
-                            <th class="px-6 py-4">Caudal Est. (m³/s)</th>
-                            <th class="px-6 py-4">Estado</th>
+                            <th class="px-6 py-4">Fecha / Periodo</th>
+                            <th class="px-6 py-4 text-center">Nivel Prom. (cm)</th>
+                            <th class="px-6 py-4 text-center">Pico Máx. (cm)</th>
+                            <th class="px-6 py-4 text-center">Caudal Est. (m³/s)</th>
+                            <th class="px-6 py-4">Estado NOC</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100 text-xs" id="tablaReportes">
+                    <tbody class="divide-y divide-slate-800/60 text-xs text-slate-300" id="tablaReportes">
                         <!-- Dinámico -->
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <!-- CALIBRACIÓN Y MODELO CANAL -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div class="bg-slate-900 rounded-2xl p-6 text-white border border-slate-800 shadow-2xl lg:col-span-2">
-                <h3 class="text-xs font-bold text-blue-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <i data-lucide="settings" class="w-4 h-4"></i> Panel de Calibración
+        <!-- CALIBRACIÓN NOC -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <div class="bg-[#0f172a] rounded-2xl p-6 border border-slate-800 shadow-[inset_0_2px_20px_rgba(0,0,0,0.5)] lg:col-span-3 relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-8 opacity-5"><i data-lucide="settings" class="w-48 h-48 text-blue-500"></i></div>
+                <h3 class="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-6 flex items-center gap-2 relative z-10">
+                    <i data-lucide="sliders" class="w-4 h-4"></i> Panel de Calibración NOC
                 </h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 items-end relative z-10">
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Ancho de Canal (L) en Metros</label>
-                        <input type="number" id="inputAnchoL" value="1.0" step="0.1" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-xl font-bold focus:outline-none focus:border-blue-500 text-white">
+                        <label class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-2">Ancho Canal (L)</label>
+                        <div class="relative">
+                            <input type="number" id="inputAnchoL" value="1.0" step="0.1" class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-4 pr-8 py-3 text-white font-mono font-bold outline-none focus:border-blue-500 focus:shadow-[0_0_10px_rgba(59,130,246,0.3)] transition-all">
+                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-bold">m</span>
+                        </div>
                     </div>
-                    <button id="btnApply" class="bg-blue-600 hover:bg-blue-500 font-bold py-3.5 px-6 rounded-xl uppercase text-[10px] tracking-widest transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2">
-                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> Aplicar Cambios
+                    <div>
+                        <label class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-2">Ubicación Sensor</label>
+                        <div class="relative">
+                            <input type="number" id="inputSensorPos" value="1.3" step="0.01" class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-4 pr-8 py-3 text-white font-mono font-bold outline-none focus:border-blue-500 focus:shadow-[0_0_10px_rgba(59,130,246,0.3)] transition-all">
+                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-bold">m</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-2">Límite Alerta</label>
+                        <div class="relative">
+                            <input type="number" id="inputAlerta" value="1.1" step="0.01" class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-4 pr-8 py-3 text-yellow-400 font-mono font-bold outline-none focus:border-yellow-500 focus:shadow-[0_0_10px_rgba(234,179,8,0.3)] transition-all">
+                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-bold">m</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-2">Límite Crítico</label>
+                        <div class="relative">
+                            <input type="number" id="inputCritico" value="1.25" step="0.01" class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-4 pr-8 py-3 text-red-400 font-mono font-bold outline-none focus:border-red-500 focus:shadow-[0_0_10px_rgba(239,68,68,0.3)] transition-all">
+                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-bold">m</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-8 flex justify-end relative z-10 border-t border-slate-800/50 pt-5">
+                    <button id="btnApply" class="bg-blue-600/90 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-xl uppercase text-[10px] tracking-[0.2em] transition-all shadow-[0_0_15px_rgba(37,99,235,0.4)] active:scale-95 flex items-center gap-3 border border-blue-400/50">
+                        <i data-lucide="save" class="w-4 h-4"></i> Sincronizar Sistema
                     </button>
                 </div>
             </div>
 
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 lg:col-span-1 flex flex-col items-center">
-                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest w-full text-left mb-6">Modelo Canal</h3>
-                <div class="relative w-32 h-64 border-x-4 border-b-4 border-slate-700 rounded-b-lg bg-slate-100 overflow-hidden shadow-inner">
-                    <div class="absolute left-0 top-0 h-full w-full z-10 flex flex-col justify-between py-2 pointer-events-none">
-                        <div class="w-full border-b border-red-400 border-dashed" style="margin-top: 4%;">
-                            <span class="text-[9px] font-mono font-bold text-red-600 bg-white/80 px-1 rounded ml-1">125cm (Crítico)</span>
+            <div class="glass-dark rounded-2xl shadow-xl p-6 lg:col-span-1 flex flex-col items-center">
+                <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest w-full text-center mb-6 bg-slate-800/50 py-2 rounded-lg border border-slate-700/50">Modelo Digital</h3>
+                <div class="relative w-32 h-[220px] border-x-4 border-b-4 border-slate-700 rounded-b-lg bg-slate-900 overflow-hidden shadow-[inset_0_4px_20px_rgba(0,0,0,0.8)]">
+                    <div class="absolute inset-0 z-10 flex flex-col pointer-events-none">
+                        <div id="markerCritico" class="w-full border-b border-red-500/80 border-dashed absolute left-0 flex justify-start items-center">
+                            <span class="text-[8px] font-mono font-bold text-red-400 bg-slate-900/90 px-1.5 py-0.5 rounded border border-red-500/30 ml-1 shadow-md" id="lblCritico">1.25m (C)</span>
                         </div>
-                        <div class="w-full border-b border-yellow-500 border-dashed" style="margin-top: 11%;">
-                            <span class="text-[9px] font-mono font-bold text-yellow-600 bg-white/80 px-1 rounded ml-1">110cm (Alerta)</span>
-                        </div>
-                        <div class="w-full border-b border-slate-300 border-dashed opacity-50" style="margin-top: 35%;">
-                            <span class="text-[8px] font-mono text-slate-400 ml-1">65cm</span>
-                        </div>
-                        <div class="w-full mt-auto">
-                            <span class="text-[8px] font-mono text-slate-400 ml-1">Fondo 0cm</span>
+                        <div id="markerAlerta" class="w-full border-b border-yellow-500/80 border-dashed absolute left-0 flex justify-start items-center">
+                            <span class="text-[8px] font-mono font-bold text-yellow-400 bg-slate-900/90 px-1.5 py-0.5 rounded border border-yellow-500/30 ml-1 shadow-md" id="lblAlerta">1.10m (A)</span>
                         </div>
                     </div>
-                    <div id="waterLevel" class="absolute bottom-0 left-0 w-full bg-blue-500 water-fill" style="height: 0%;">
+                    <div id="waterLevel" class="absolute bottom-0 left-0 w-full bg-slate-800 water-fill" style="height: 0%;">
                         <div class="absolute top-0 left-0 w-full h-1 bg-white/20"></div>
                     </div>
                 </div>
-                <p class="mt-4 text-[10px] font-bold text-slate-400 uppercase" id="displayL">Calibración L = 1.0m</p>
+                <div class="mt-5 w-full flex justify-between px-2 bg-slate-900/80 py-2 rounded border border-slate-800">
+                    <p class="text-[9px] font-mono font-bold text-slate-400 uppercase" id="displayParamsL">L: --</p>
+                    <p class="text-[9px] font-mono font-bold text-slate-400 uppercase" id="displayParamsH">H: --</p>
+                </div>
             </div>
         </div>
     </main>
 
     <script>
+        function getFirebaseTimestamp(id) {
+            if (!id || id.length < 8 || !id.startsWith('-')) return Date.now();
+            const PUSH_CHARS = '-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz';
+            let time = 0;
+            for (let i = 0; i < 8; i++) {
+                time = time * 64 + PUSH_CHARS.indexOf(id.charAt(i));
+            }
+            return time;
+        }
+
+        function downloadEvidence() {
+            const img = document.getElementById('evidenceImage');
+            if (img.src && !img.src.includes('window.location.href')) {
+                const link = document.createElement('a');
+                link.href = img.src;
+                link.download = `HydroSentinel_Evidencia_${new Date().getTime()}.jpg`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+
         window.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
 
-            // --- CONFIGURACIÓN MAESTRA ---
             const FIREBASE_URL = "https://hydrosentinel-b7ad6-default-rtdb.firebaseio.com/historial.json"; 
-            const EVIDENCE_URL = "https://hydrosentinel-b7ad6-default-rtdb.firebaseio.com/evidencia.json";
-            const PROFUNDIDAD_MAX = 130;
-            const NIVEL_ALERTA = 110;
-            const NIVEL_CRITICO = 125;
+            const EV_URL = "https://hydrosentinel-b7ad6-default-rtdb.firebaseio.com/evidencia.json";
             
             let anchoL = 1.0;
-            let ultimoNivel = 0;
-            let isDemoMode = true;
+            let sensorPosM = 1.30;
+            let nivelAlertaM = 1.10;
+            let nivelCriticoM = 1.25;
+            let fullDataset = []; 
+            let lastDataTime = null;
 
-            // --- GRÁFICA ---
             const ctxHist = document.getElementById('advancedHistoricalChart')?.getContext('2d');
+            
+            // Configuración estética Chart.js para Dark Mode
+            Chart.defaults.color = '#94a3b8';
+            Chart.defaults.font.family = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace';
+            
             let advancedChart = new Chart(ctxHist, {
                 type: 'line',
-                data: { labels: [], datasets: [] },
-                options: {
-                    responsive: true,
+                data: { 
+                    labels: [], 
+                    datasets: [{ 
+                        label: 'Nivel Promedio', 
+                        data: [], 
+                        borderColor: '#38bdf8', 
+                        backgroundColor: 'rgba(56, 189, 248, 0.1)', 
+                        borderWidth: 2,
+                        pointBackgroundColor: '#0284c7',
+                        pointBorderColor: '#38bdf8',
+                        pointRadius: 2,
+                        pointHoverRadius: 5,
+                        fill: true, 
+                        tension: 0.4 
+                    }] 
+                },
+                options: { 
+                    responsive: true, 
                     maintainAspectRatio: false,
                     scales: { 
                         y: { 
-                            beginAtZero: true, 
-                            max: PROFUNDIDAD_MAX, 
-                            grid: { color: '#f1f5f9' },
+                            min: 0, 
+                            beginAtZero: true,
+                            grid: { color: 'rgba(51, 65, 85, 0.5)', drawBorder: false },
                             ticks: { font: { size: 10 } }
-                        }, 
-                        x: { 
-                            grid: { display: false },
-                            ticks: { font: { size: 10 } }
-                        } 
+                        },
+                        x: {
+                            grid: { color: 'rgba(51, 65, 85, 0.3)', drawBorder: false },
+                            ticks: { font: { size: 10 }, maxRotation: 0 }
+                        }
                     },
                     plugins: { 
-                        legend: { 
-                            display: true, 
-                            position: 'top', 
-                            labels: { usePointStyle: true, boxWidth: 6, font: { size: 10 } } 
-                        },
+                        legend: { display: false },
                         tooltip: {
-                            callbacks: {
-                                title: function(tooltipItems) {
-                                    const item = tooltipItems[0];
-                                    let label = item.chart.data.labels[item.dataIndex];
-                                    return Array.isArray(label) ? label.join(' ') : label;
-                                }
-                            }
+                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                            titleColor: '#e2e8f0',
+                            bodyColor: '#cbd5e1',
+                            borderColor: '#334155',
+                            borderWidth: 1,
+                            padding: 10,
+                            displayColors: false
                         }
-                    }
+                    },
+                    interaction: { mode: 'index', intersect: false }
                 }
             });
 
-            // --- DB LOCAL DEMO ---
-            const historicalDatabase = [];
-            const baseDate = new Date();
-            for (let i = 365; i >= 0; i--) {
-                let d = new Date(baseDate);
-                d.setDate(d.getDate() - i);
-                let val = 50 + Math.sin(i / 20) * 25 + (Math.random() * 10);
-                historicalDatabase.push({
-                    date: new Date(d),
-                    nivelPromedio: Math.max(0, val).toFixed(1),
-                    nivelMaximo: (val + 10).toFixed(1),
-                });
-            }
+            async function sync() {
+                try {
+                    anchoL = parseFloat(document.getElementById('inputAnchoL').value) || 1.0;
+                    sensorPosM = parseFloat(document.getElementById('inputSensorPos').value) || 1.30;
+                    nivelAlertaM = parseFloat(document.getElementById('inputAlerta').value) || 1.10;
+                    nivelCriticoM = parseFloat(document.getElementById('inputCritico').value) || 1.25;
 
-            function renderAdvancedChart(period, metric) {
-                let filteredData = [];
-                if (period === '7d') filteredData = historicalDatabase.slice(-7);
-                else if (period === '1m') filteredData = historicalDatabase.slice(-30);
-                else if (period === '3m') filteredData = historicalDatabase.slice(-90);
-                else if (period === '1y') filteredData = historicalDatabase;
-                else if (period === 'custom') {
-                    const from = new Date(document.getElementById('dateFrom').value);
-                    const to = new Date(document.getElementById('dateTo').value);
-                    filteredData = (!isNaN(from) && !isNaN(to)) ? historicalDatabase.filter(d => d.date >= from && d.date <= to) : historicalDatabase.slice(-30);
-                }
-
-                let labels = [];
-                let data1 = [];
-                let data2 = []; 
-
-                if (period === '1y') {
-                    advancedChart.config.type = 'bar';
-                    const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-                    let monthlyData = {};
-                    filteredData.forEach(d => {
-                        let m = d.date.getMonth();
-                        if(!monthlyData[m]) monthlyData[m] = { sum: 0, count: 0, max: 0 };
-                        monthlyData[m].sum += parseFloat(d.nivelPromedio);
-                        monthlyData[m].count++;
-                        if(parseFloat(d.nivelMaximo) > monthlyData[m].max) monthlyData[m].max = parseFloat(d.nivelMaximo);
-                    });
-                    for(let i=0; i<12; i++) {
-                        if(monthlyData[i]) {
-                            labels.push(months[i]);
-                            data1.push((monthlyData[i].sum / monthlyData[i].count).toFixed(1));
-                            data2.push(monthlyData[i].max.toFixed(1));
-                        }
-                    }
-                } else {
-                    advancedChart.config.type = 'line';
-                    filteredData.forEach(d => {
-                        let dateStr = d.date.toLocaleDateString('es-ES', { month: 'short', day: 'numeric' });
-                        labels.push(dateStr.length > 16 ? dateStr.split(' ') : dateStr);
-                        data1.push(d.nivelPromedio);
-                        data2.push(d.nivelMaximo);
-                    });
-                }
-
-                let datasets = [];
-                if (metric === 'nivel') {
-                    datasets = [
-                        { label: 'Promedio (cm)', data: data1, borderColor: '#3b82f6', backgroundColor: period === '1y' ? '#3b82f6' : 'rgba(59, 130, 246, 0.1)', fill: period !== '1y', tension: 0.3 },
-                        { label: 'Pico Máx (cm)', data: data2, borderColor: '#ef4444', backgroundColor: '#ef4444', type: period === '1y' ? 'bar' : 'line', borderDash: [5, 5], pointRadius: 0 }
-                    ];
-                    advancedChart.options.scales.y.max = PROFUNDIDAD_MAX;
-                } else {
-                    let caudalData = data1.map(h => {
-                        let val = parseFloat(h);
-                        return isNaN(val) ? 0 : (1.45 * anchoL * Math.pow(val / 100.0, 1.5)).toFixed(3);
-                    });
-                    datasets = [{ label: 'Caudal (m³/s)', data: caudalData, borderColor: '#06b6d4', backgroundColor: 'rgba(6, 182, 212, 0.1)', fill: true, tension: 0.3 }];
-                    advancedChart.options.scales.y.max = null;
-                }
-
-                advancedChart.data.labels = labels;
-                advancedChart.data.datasets = datasets;
-                advancedChart.update();
-                poblarTabla(filteredData);
-            }
-
-            function poblarTabla(data) {
-                const tbody = document.getElementById('tablaReportes');
-                let rows = '';
-                data.slice(-15).reverse().forEach(d => {
-                    let nProm = parseFloat(d.nivelPromedio);
-                    if(isNaN(nProm)) nProm = 0;
-                    let q = (1.45 * anchoL * Math.pow(nProm/100, 1.5)).toFixed(3);
-                    let nivelMax = parseFloat(d.nivelMaximo) || 0;
-                    let estadoClass = nivelMax >= NIVEL_CRITICO ? 'bg-red-100 text-red-700' : (nivelMax >= NIVEL_ALERTA ? 'bg-yellow-100 text-yellow-700' : 'bg-emerald-100 text-emerald-700');
-                    let estadoTxt = nivelMax >= NIVEL_CRITICO ? 'Crítico' : (nivelMax >= NIVEL_ALERTA ? 'Alerta' : 'Normal');
+                    const res = await fetch(FIREBASE_URL + "?limitToLast=1000&nocache=" + new Date().getTime());
+                    const data = await res.json();
                     
-                    rows += `<tr class="hover:bg-slate-50">
-                        <td class="px-6 py-4 font-medium">${d.date.toLocaleDateString()}</td>
-                        <td class="px-6 py-4">${nProm} cm</td>
-                        <td class="px-6 py-4 font-bold">${nivelMax} cm</td>
-                        <td class="px-6 py-4 text-cyan-600 font-mono font-bold">${q}</td>
-                        <td class="px-6 py-4"><span class="px-2 py-0.5 rounded-full font-bold uppercase text-[9px] ${estadoClass}">${estadoTxt}</span></td>
-                    </tr>`;
-                });
-                if(tbody) tbody.innerHTML = rows;
+                    if (data && typeof data === 'object' && Object.keys(data).length > 0) {
+                        fullDataset = Object.entries(data).map(([id, val]) => ({
+                            id,
+                            nivel: parseFloat(val.nivel) || 0,
+                            timestamp: val.timestamp || getFirebaseTimestamp(id)
+                        })).sort((a,b) => a.timestamp - b.timestamp);
+
+                        const last = fullDataset[fullDataset.length - 1];
+                        lastDataTime = last.timestamp; 
+                        
+                        renderData(); 
+                        updateRealtimeUI(last.nivel);
+                        
+                        document.getElementById('connectionStatus').innerText = "ENLACE NOC ACTIVO";
+                        document.getElementById('statusDot').className = "w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]";
+                        document.getElementById('syncProgress').className = "bg-blue-500 h-full w-full animate-pulse";
+                    } else {
+                        updateOfflineUI("ESPERANDO DATOS", "Aguardando primera lectura...");
+                    }
+
+                    const evRes = await fetch(EV_URL + "?nocache=" + new Date().getTime());
+                    const evData = await evRes.json();
+                    if(evData && evData.last_photo) {
+                        const img = document.getElementById('evidenceImage');
+                        const btn = document.getElementById('btnDownloadEvidence');
+                        img.src = "data:image/jpeg;base64," + evData.last_photo;
+                        img.classList.remove('hidden');
+                        document.getElementById('evidencePlaceholder').classList.add('hidden');
+                        document.getElementById('evidenceData').classList.remove('hidden');
+                        document.getElementById('evidenceDate').innerText = new Date().toLocaleString();
+                        btn.disabled = false;
+                    }
+                } catch (e) {
+                    updateOfflineUI("SINCRONIZANDO", "Estableciendo enlace de red...");
+                }
             }
 
-            function updateUI(nivelInput, statusLabel, dotColor) {
-                // GUARDIA DE DATOS: Aseguramos que el nivel sea un número válido
-                let nivel = parseFloat(nivelInput);
-                if (isNaN(nivel)) {
-                    console.warn("Dato de nivel no válido recibido:", nivelInput);
-                    return; 
+            function updateRealtimeUI(nivelCm) {
+                const now = Date.now();
+                const valNivel = isNaN(nivelCm) ? 0 : nivelCm;
+                const nivelM = valNivel / 100.0;
+                const segundosDiff = (now - lastDataTime) / 1000;
+                
+                if (segundosDiff > 150) {
+                    updateOfflineUI("ESPERANDO DATOS", "Aguardando nueva telemetría...");
+                    return;
                 }
 
-                ultimoNivel = nivel;
-                const timeString = new Date().toLocaleTimeString();
-
-                const elLevel = document.getElementById('currentLevel');
-                const elStatus = document.getElementById('connectionStatus');
-                const elDot = document.getElementById('statusDot');
-                const elSync = document.getElementById('lastSync');
-                const elCamTime = document.getElementById('camTime');
+                document.getElementById('currentLevel').innerText = valNivel;
+                document.getElementById('currentLevel').className = "text-5xl font-black text-blue-400 transition-colors drop-shadow-[0_0_15px_rgba(96,165,250,0.4)]";
+                document.getElementById('lastSync').innerText = new Date(lastDataTime).toLocaleTimeString();
+                document.getElementById('camTime').innerText = `NOC ${new Date().toLocaleTimeString()}`;
                 
-                if (elLevel) elLevel.innerText = nivel;
-                if (elStatus) elStatus.innerText = statusLabel;
-                if (elDot) elDot.className = `w-2.5 h-2.5 rounded-full animate-pulse ${dotColor}`;
-                if (elSync) elSync.innerText = timeString;
-                if (elCamTime) elCamTime.innerText = `REC ${timeString}`;
-
-                // Cálculo de Caudal seguro
-                let hMetros = nivel / 100.0;
-                let q = (hMetros <= 0) ? 0 : 1.45 * anchoL * Math.pow(hMetros, 1.5);
-                const flow = document.getElementById('currentFlow');
-                if (flow) flow.innerText = q.toFixed(3);
-
+                let q = (nivelM <= 0) ? 0 : 1.45 * anchoL * Math.pow(nivelM, 1.5);
+                document.getElementById('currentFlow').innerText = q.toFixed(3);
+                document.getElementById('currentFlow').className = "text-5xl font-black text-cyan-400 transition-colors drop-shadow-[0_0_15px_rgba(34,211,238,0.4)]";
+                
                 const water = document.getElementById('waterLevel');
                 const stTitle = document.getElementById('systemStatus');
-                const badge = document.getElementById('liveBadge');
+                const stIcon = document.getElementById('statusIcon');
+                const stDesc = document.getElementById('statusDesc');
+                
+                water.style.height = `${(nivelM / sensorPosM) * 100}%`;
+                document.getElementById('markerCritico').style.top = `${(1 - (nivelCriticoM / sensorPosM)) * 100}%`;
+                document.getElementById('markerAlerta').style.top = `${(1 - (nivelAlertaM / sensorPosM)) * 100}%`;
+                
+                // ACTUALIZAR ETIQUETAS DINÁMICAMENTE
+                document.getElementById('lblCritico').innerText = `${nivelCriticoM.toFixed(2)}m (C)`;
+                document.getElementById('lblAlerta').innerText = `${nivelAlertaM.toFixed(2)}m (A)`;
+                
+                document.getElementById('displayParamsL').innerText = `L: ${anchoL.toFixed(1)}m`;
+                document.getElementById('displayParamsH').innerText = `H: ${sensorPosM.toFixed(1)}m`;
 
-                if (water) {
-                    water.style.height = `${(nivel / PROFUNDIDAD_MAX) * 100}%`;
-                    if (nivel >= NIVEL_CRITICO) {
-                        water.className = "absolute bottom-0 left-0 w-full bg-red-500 water-fill shadow-inner";
-                        if (stTitle) stTitle.innerText = "ALERTA CRÍTICA";
-                    } else if (nivel >= NIVEL_ALERTA) {
-                        water.className = "absolute bottom-0 left-0 w-full bg-yellow-500 water-fill shadow-inner";
-                        if (stTitle) stTitle.innerText = "PRECAUCIÓN";
-                    } else {
-                        water.className = "absolute bottom-0 left-0 w-full bg-blue-500 water-fill shadow-inner";
-                        if (stTitle) stTitle.innerText = "ESTADO NORMAL";
-                    }
+                if (nivelM >= nivelCriticoM) {
+                    water.className = "absolute bottom-0 left-0 w-full bg-red-600/90 water-fill shadow-[0_-5px_25px_rgba(220,38,38,0.6)]";
+                    stTitle.innerText = "PELIGRO CRÍTICO";
+                    stTitle.className = "text-xl font-bold text-red-400 uppercase tracking-tight drop-shadow-md";
+                    stDesc.innerText = "Desbordamiento inminente";
+                    stIcon.className = "p-3 bg-red-500/20 border border-red-500/40 rounded-xl text-red-400 animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.3)]";
+                    stIcon.innerHTML = '<i data-lucide="alert-triangle"></i>';
+                } else if (nivelM >= nivelAlertaM) {
+                    water.className = "absolute bottom-0 left-0 w-full bg-yellow-500/90 water-fill shadow-[0_-5px_25px_rgba(234,179,8,0.4)]";
+                    stTitle.innerText = "ALERTA OPERATIVA";
+                    stTitle.className = "text-xl font-bold text-yellow-400 uppercase tracking-tight drop-shadow-md";
+                    stDesc.innerText = "Nivel en observación técnica";
+                    stIcon.className = "p-3 bg-yellow-500/20 border border-yellow-500/40 rounded-xl text-yellow-400 shadow-[0_0_15px_rgba(234,179,8,0.2)]";
+                    stIcon.innerHTML = '<i data-lucide="alert-circle"></i>';
+                } else {
+                    water.className = "absolute bottom-0 left-0 w-full bg-blue-500/80 water-fill shadow-[0_-5px_25px_rgba(59,130,246,0.3)]";
+                    stTitle.innerText = "ESTADO ESTABLE";
+                    stTitle.className = "text-xl font-bold text-emerald-400 uppercase tracking-tight drop-shadow-md";
+                    stDesc.innerText = "Condiciones de flujo normal";
+                    stIcon.className = "p-3 bg-emerald-500/20 border border-emerald-500/40 rounded-xl text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)]";
+                    stIcon.innerHTML = '<i data-lucide="check-circle"></i>';
                 }
                 lucide.createIcons();
             }
 
-            async function fetchData() {
-                try {
-                    const res = await fetch(FIREBASE_URL + "?limitToLast=1&nocache=" + new Date().getTime());
-                    const data = await res.json();
-                    if (data && typeof data === 'object') {
-                        isDemoMode = false;
-                        const ultima = Object.values(data)[0];
-                        // Verificación de propiedad nivel en el objeto de Firebase
-                        if (ultima && ultima.hasOwnProperty('nivel')) {
-                            updateUI(ultima.nivel, "Nube Conectada", "bg-emerald-500");
-                        }
+            function updateOfflineUI(titulo, desc) {
+                document.getElementById('systemStatus').innerText = titulo;
+                document.getElementById('systemStatus').className = "text-xl font-bold text-slate-500 uppercase tracking-tight";
+                document.getElementById('statusDesc').innerText = desc;
+                document.getElementById('statusIcon').className = "p-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-slate-500";
+                document.getElementById('statusIcon').innerHTML = '<i data-lucide="loader" class="w-8 h-8 animate-spin"></i>';
+                document.getElementById('statusDot').className = "w-2 h-2 rounded-full bg-amber-500 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.8)]";
+                document.getElementById('connectionStatus').innerText = titulo;
+                document.getElementById('currentLevel').innerText = "--";
+                document.getElementById('currentLevel').className = "text-5xl font-black text-slate-700 transition-colors";
+                document.getElementById('currentFlow').innerText = "--";
+                document.getElementById('currentFlow').className = "text-5xl font-black text-slate-700 transition-colors";
+                document.getElementById('waterLevel').className = "absolute bottom-0 left-0 w-full bg-slate-800 water-fill";
+                document.getElementById('waterLevel').style.height = "0%";
+                lucide.createIcons();
+            }
+
+            function renderData() {
+                const period = document.getElementById('histPeriod').value;
+                const metric = document.getElementById('histMetric').value;
+                const customContainer = document.getElementById('customDateRange');
+
+                let filtered = [...fullDataset];
+                let intervalMs = 15 * 60 * 1000;
+
+                // MOSTRAR/OCULTAR FILTRO DE CALENDARIO
+                if (period === 'custom') {
+                    customContainer.classList.remove('hidden');
+                } else {
+                    customContainer.classList.add('hidden');
+                    if (period === 'today') {
+                        filtered = fullDataset.filter(d => d.timestamp >= new Date().setHours(0,0,0,0));
+                    } else if (period === '7d') {
+                        filtered = fullDataset.filter(d => d.timestamp >= Date.now() - (7 * 24 * 60 * 60 * 1000));
+                        intervalMs = 4 * 60 * 60 * 1000;
+                    } else if (period === '1m') {
+                        filtered = fullDataset.filter(d => d.timestamp >= Date.now() - (30 * 24 * 60 * 60 * 1000));
+                        intervalMs = 24 * 60 * 60 * 1000;
                     }
-                } catch (e) {
-                    isDemoMode = true;
                 }
+
+                const processAggregation = (dataToProcess) => {
+                    const aggregated = [];
+                    const groups = {};
+                    let sumTotal = 0;
+                    let maxTotal = 0;
+
+                    dataToProcess.forEach(d => {
+                        const bucket = Math.floor(d.timestamp / intervalMs) * intervalMs;
+                        if (!groups[bucket]) groups[bucket] = { levels: [], timestamp: bucket };
+                        groups[bucket].levels.push(d.nivel);
+                        
+                        sumTotal += d.nivel;
+                        if (d.nivel > maxTotal) maxTotal = d.nivel;
+                    });
+
+                    // ACTUALIZAR ETIQUETAS DE TENDENCIA GLOBALES
+                    if (dataToProcess.length > 0) {
+                        const avgTotal = sumTotal / dataToProcess.length;
+                        const flowTotal = 1.45 * anchoL * Math.pow(avgTotal / 100, 1.5);
+                        
+                        document.getElementById('lblAvgNivel').innerText = `${avgTotal.toFixed(1)}`;
+                        document.getElementById('lblMaxPico').innerText = `${maxTotal.toFixed(1)}`;
+                        document.getElementById('lblAvgCaudal').innerText = `${isNaN(flowTotal) ? '0.000' : flowTotal.toFixed(3)}`;
+                    } else {
+                        document.getElementById('lblAvgNivel').innerText = `--`;
+                        document.getElementById('lblMaxPico').innerText = `--`;
+                        document.getElementById('lblAvgCaudal').innerText = `--`;
+                    }
+
+                    Object.values(groups).forEach(g => {
+                        const avg = g.levels.reduce((a,b) => a+b, 0) / g.levels.length;
+                        const max = Math.max(...g.levels);
+                        const q = (1.45 * anchoL * Math.pow(avg/100, 1.5));
+                        aggregated.push({ 
+                            timestamp: g.timestamp, 
+                            avg: isNaN(avg) ? 0 : avg, 
+                            max: isNaN(max) ? 0 : max, 
+                            caudal: isNaN(q) ? 0 : q 
+                        });
+                    });
+
+                    advancedChart.data.labels = aggregated.map(d => {
+                        const dt = new Date(d.timestamp);
+                        return period === 'today' 
+                            ? dt.toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit'})
+                            : dt.toLocaleDateString('es-ES', {day:'2-digit', month:'short'});
+                    });
+                    
+                    // Actualizar color de la gráfica según métrica (Cyan para caudal, Blue para nivel)
+                    if(metric === 'caudal') {
+                        advancedChart.data.datasets[0].borderColor = '#22d3ee';
+                        advancedChart.data.datasets[0].backgroundColor = 'rgba(34, 211, 238, 0.1)';
+                        advancedChart.data.datasets[0].pointBackgroundColor = '#0891b2';
+                        advancedChart.data.datasets[0].pointBorderColor = '#22d3ee';
+                    } else {
+                        advancedChart.data.datasets[0].borderColor = '#38bdf8';
+                        advancedChart.data.datasets[0].backgroundColor = 'rgba(56, 189, 248, 0.1)';
+                        advancedChart.data.datasets[0].pointBackgroundColor = '#0284c7';
+                        advancedChart.data.datasets[0].pointBorderColor = '#38bdf8';
+                    }
+
+                    advancedChart.data.datasets[0].data = aggregated.map(d => (metric === 'nivel' ? d.avg.toFixed(1) : d.caudal.toFixed(3)));
+                    advancedChart.update();
+
+                    const tbody = document.getElementById('tablaReportes');
+                    tbody.innerHTML = aggregated.slice(-15).reverse().map(d => {
+                        let maxM = d.max / 100;
+                        let badge = maxM >= nivelCriticoM 
+                            ? 'bg-red-500/20 text-red-400 border border-red-500/30' 
+                            : (maxM >= nivelAlertaM 
+                                ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' 
+                                : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30');
+                        let badgeText = maxM >= nivelCriticoM ? 'CRÍTICO' : (maxM >= nivelAlertaM ? 'ALERTA' : 'ESTABLE');
+                        
+                        return `<tr class="hover:bg-slate-800/30 transition-colors">
+                            <td class="px-6 py-4 font-mono text-slate-400 border-b border-slate-800/50">${new Date(d.timestamp).toLocaleString('es-ES', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'})}</td>
+                            <td class="px-6 py-4 text-center font-bold text-slate-300 border-b border-slate-800/50">${d.avg.toFixed(1)} <span class="text-slate-600 text-[10px]">cm</span></td>
+                            <td class="px-6 py-4 text-center font-black text-white border-b border-slate-800/50">${d.max} <span class="text-slate-600 text-[10px]">cm</span></td>
+                            <td class="px-6 py-4 text-center font-mono font-bold text-cyan-400 border-b border-slate-800/50">${d.caudal.toFixed(3)}</td>
+                            <td class="px-6 py-4 border-b border-slate-800/50"><span class="px-2.5 py-1 rounded-sm text-[9px] font-bold tracking-widest uppercase shadow-sm ${badge}">${badgeText}</span></td>
+                        </tr>`;
+                    }).join('');
+                };
+
+                if (period !== 'custom') processAggregation(filtered);
+
+                // LOGICA DEL BOTÓN FILTRAR
+                document.getElementById('btnApplyFilter').onclick = () => {
+                    const start = new Date(document.getElementById('dateStart').value).getTime();
+                    const end = new Date(document.getElementById('dateEnd').value).setHours(23,59,59,999);
+                    if (start && end) {
+                        const customFiltered = fullDataset.filter(d => d.timestamp >= start && d.timestamp <= end);
+                        processAggregation(customFiltered);
+                    }
+                };
             }
 
-            function runDemo() {
-                if (!isDemoMode) return;
-                let level = 50 + Math.sin(Date.now()/5000)*25 + Math.random()*5;
-                let nivelRedondeado = Math.round(Math.max(0, level));
-                updateUI(nivelRedondeado, "Modo Demo Activo", "bg-purple-500");
-
-                if (historicalDatabase.length > 0) {
-                    historicalDatabase[historicalDatabase.length - 1].nivelPromedio = nivelRedondeado.toFixed(1);
-                    historicalDatabase[historicalDatabase.length - 1].nivelMaximo = (nivelRedondeado + 10).toFixed(1);
-                    renderAdvancedChart(document.getElementById('histPeriod').value, document.getElementById('histMetric').value);
-                }
-            }
-
-            // LISTENERS
-            document.getElementById('histPeriod').addEventListener('change', (e) => {
-                document.getElementById('customRangeInputs').classList.toggle('hidden', e.target.value !== 'custom');
-                if (e.target.value !== 'custom') renderAdvancedChart(e.target.value, document.getElementById('histMetric').value);
-            });
-            document.getElementById('btnFilterCustom').addEventListener('click', () => renderAdvancedChart('custom', document.getElementById('histMetric').value));
-            document.getElementById('histMetric').addEventListener('change', (e) => renderAdvancedChart(document.getElementById('histPeriod').value, e.target.value));
-            document.getElementById('btnApply').addEventListener('click', () => {
-                anchoL = parseFloat(document.getElementById('inputAnchoL').value) || 1.0;
-                document.getElementById('displayL').innerText = `Calibración L = ${anchoL}m`;
-                renderAdvancedChart(document.getElementById('histPeriod').value, document.getElementById('histMetric').value);
-            });
-
-            renderAdvancedChart('1m', 'nivel');
-            fetchData();
-            setInterval(() => isDemoMode ? runDemo() : fetchData(), 5000); 
+            document.getElementById('btnApply').addEventListener('click', sync);
+            document.getElementById('histPeriod').addEventListener('change', renderData);
+            document.getElementById('histMetric').addEventListener('change', renderData);
+            
+            setInterval(sync, 15000); 
+            sync();
         });
     </script>
 </body>
