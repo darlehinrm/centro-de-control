@@ -2,45 +2,65 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>NOC HydroSentinel v4.0</title>
+    <title>HydroSentinel - Centro de Control NOC v4.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .water-fill { transition: height 1.5s ease-in-out, background-color 0.5s ease; }
+    </style>
 </head>
-<body class="bg-[#020617] text-slate-300 font-mono min-h-screen flex flex-col items-center justify-center">
-    
-    <div class="bg-slate-900 border border-slate-800 p-10 rounded-3xl shadow-2xl text-center w-full max-w-md">
+<body class="bg-[#020617] text-slate-300 font-mono min-h-screen flex flex-col items-center justify-center p-6">
+
+    <div class="bg-slate-900 border border-slate-800 p-8 rounded-3xl shadow-2xl text-center w-full max-w-lg">
         <h1 class="text-blue-500 font-bold tracking-tighter uppercase mb-8">NOC Terminal - Nivel Real</h1>
         
-        <div class="relative w-24 h-64 bg-slate-950 mx-auto rounded-xl border-4 border-slate-800 overflow-hidden mb-8">
-            <div id="waterFill" class="absolute bottom-0 w-full bg-blue-500 transition-all duration-1000" style="height: 0%"></div>
+        <div class="relative w-32 h-72 bg-slate-950 mx-auto rounded-2xl border-4 border-slate-800 shadow-inner overflow-hidden mb-8">
+            <div id="waterFill" class="absolute bottom-0 w-full bg-blue-500 water-fill" style="height: 0%">
+                <div class="absolute top-0 left-0 w-full h-1 bg-white/30 animate-pulse"></div>
+            </div>
         </div>
 
-        <div class="text-8xl font-black text-white tracking-tighter mb-2">
-            <span id="mainNivel">--</span>
+        <div class="flex items-baseline justify-center gap-2 mb-4">
+            <h2 id="mainNivel" class="text-9xl font-black text-white tracking-tighter">--</h2>
+            <span class="text-2xl font-bold text-slate-600">CM</span>
         </div>
-        <p class="text-slate-500 font-bold uppercase text-xs tracking-widest">Centímetros</p>
+        
+        <div class="flex items-center justify-center gap-2">
+            <div id="statusDot" class="w-2.5 h-2.5 rounded-full bg-slate-500 animate-pulse"></div>
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest" id="statusText">Iniciando Enlace...</span>
+        </div>
     </div>
 
     <script>
+        // CONFIGURACIÓN DE CONEXIÓN
         const FIREBASE_AUTH = "dnDjcywHxynS29VxdBLPDMo6nF5UC14QShKq4dmc";
-        const URL = `https://hydrosentinel-b7ad6-default-rtdb.firebaseio.com/nodos/estacion_01/actual.json?auth=${FIREBASE_AUTH}`;
+        const FIREBASE_URL = "https://hydrosentinel-b7ad6-default-rtdb.firebaseio.com/nodos/estacion_01/actual.json?auth=" + FIREBASE_AUTH;
 
         async function sync() {
             try {
-                const res = await fetch(URL);
-                const data = await res.json();
-                if (data) {
-                    const nivel = data.nivel || 0;
+                const response = await fetch(FIREBASE_URL);
+                const data = await response.json();
+                
+                if (data && data.nivel !== undefined) {
+                    const nivel = data.nivel;
                     document.getElementById('mainNivel').innerText = nivel;
-                    // Porcentaje basado en fondo de 130cm
-                    let porcentaje = (nivel / 130) * 100;
+                    
+                    // Cálculo de porcentaje (basado en fondo de 2 metros / 200cm según tu DB)
+                    let porcentaje = (nivel / 200) * 100;
                     document.getElementById('waterFill').style.height = Math.min(porcentaje, 100) + "%";
+                    
+                    document.getElementById('statusText').innerText = "ENLACE NOC ACTIVO";
+                    document.getElementById('statusDot').className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
                 }
-            } catch (e) { console.error("Error de enlace"); }
+            } catch (e) {
+                document.getElementById('statusText').innerText = "ENLACE PERDIDO";
+                document.getElementById('statusDot').className = "w-2.5 h-2.5 rounded-full bg-red-500";
+            }
         }
 
         setInterval(sync, 3000);
         sync();
+        lucide.createIcons();
     </script>
 </body>
 </html>
