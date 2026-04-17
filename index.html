@@ -313,7 +313,7 @@
 
     <script>
         // ====================================================================
-        // [NÚCLEO JS BLINDADO MODULARMENTE - LISTO PARA PRODUCCIÓN]
+        // [NÚCLEO JS BLINDADO MODULARMENTE - EXTRACCIÓN DE TANQUE DIGITAL CORREGIDA]
         // ====================================================================
         const CONFIG_NODOS = {
             "estacion_01": {
@@ -435,20 +435,40 @@
 
                 let conexionActiva = false;
 
-                // 1. BLOQUE BLINDADO: LECTURA EN TIEMPO REAL
+                // ====================================================
+                // 1. BLOQUE BLINDADO: LECTURA DE TANQUE DIGITAL
+                // ====================================================
                 try {
                     const resActual = await fetch(`${FIREBASE_BASE}${nodoActivo}/actual.json?auth=${AUTH_TOKEN}&nocache=${new Date().getTime()}`);
                     if (resActual.ok) {
                         const dataActual = await resActual.json();
-                        if (dataActual) {
-                            let nivelDato = typeof dataActual === 'object' ? dataActual.nivel : dataActual;
+                        
+                        if (dataActual !== null && dataActual !== undefined) {
+                            let nivelDato = 0;
+                            
+                            // Algoritmo de extracción a prueba de fallos:
+                            if (typeof dataActual === 'object' && 'nivel' in dataActual) {
+                                nivelDato = dataActual.nivel; 
+                            } else if (!isNaN(dataActual)) {
+                                nivelDato = dataActual; 
+                            } else if (typeof dataActual === 'object') {
+                                const vals = Object.values(dataActual);
+                                if(vals.length > 0 && typeof vals[0] === 'object' && 'nivel' in vals[0]) {
+                                    nivelDato = vals[0].nivel;
+                                } else if (vals.length > 0 && !isNaN(vals[0])) {
+                                    nivelDato = vals[0];
+                                }
+                            }
+
                             updateRealtimeUI(nivelDato);
                             conexionActiva = true;
                         }
                     }
-                } catch (e) { console.error("Fallo lectura en vivo"); }
+                } catch (e) { console.error("Fallo lectura en vivo", e); }
 
-                // 2. BLOQUE BLINDADO: LECTURA HISTÓRICA
+                // ====================================================
+                // 2. BLOQUE BLINDADO: LECTURA HISTÓRICA (Gráficas)
+                // ====================================================
                 try {
                     const resHist = await fetch(`${FIREBASE_BASE}${nodoActivo}/historial.json?auth=${AUTH_TOKEN}&orderBy=%22%24key%22&limitToLast=1000&nocache=${new Date().getTime()}`);
                     if (resHist.ok) {
@@ -466,9 +486,11 @@
                             conexionActiva = true;
                         }
                     }
-                } catch (e) { console.error("Fallo lectura histórica"); }
+                } catch (e) { console.error("Fallo lectura histórica", e); }
 
+                // ====================================================
                 // 3. BLOQUE BLINDADO: EVIDENCIA
+                // ====================================================
                 try {
                     const evRes = await fetch(`${FIREBASE_BASE}${nodoActivo}/evidencia.json?auth=${AUTH_TOKEN}&nocache=${new Date().getTime()}`);
                     if (evRes.ok) {
@@ -483,7 +505,7 @@
                             document.getElementById('btnDownloadEvidence').disabled = false;
                         }
                     }
-                } catch (e) { console.error("Fallo lectura cámara"); }
+                } catch (e) { console.error("Fallo lectura cámara", e); }
 
                 if (conexionActiva) {
                     document.getElementById('connectionStatus').innerText = "ENLACE NOC ACTIVO";
@@ -494,9 +516,8 @@
                 }
             }
 
-            // CANDADO VISUAL DEL TANQUE
             function updateRealtimeUI(nivelCm) {
-                const valNivel = isNaN(nivelCm) ? 0 : parseFloat(nivelCm);
+                const valNivel = isNaN(parseFloat(nivelCm)) ? 0 : parseFloat(nivelCm);
                 const nivelM = valNivel / 100.0;
                 
                 document.getElementById('currentLevel').innerText = valNivel;
@@ -513,7 +534,7 @@
                 const stDesc = document.getElementById('statusDesc');
                 
                 let porcentajeLlenado = (nivelM / sensorPosM) * 100;
-                porcentajeLlenado = Math.min(100, Math.max(0, porcentajeLlenado)); // <-- Clamping matemático estricto
+                porcentajeLlenado = Math.min(100, Math.max(0, porcentajeLlenado)); // Clamping seguro del CSS
                 water.style.height = `${porcentajeLlenado}%`;
                 
                 let topCritico = (1 - (nivelCriticoM / sensorPosM)) * 100;
