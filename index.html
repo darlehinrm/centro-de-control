@@ -262,21 +262,21 @@
                     <div>
                         <label class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-2">Ubicación Sensor</label>
                         <div class="relative">
-                            <input type="number" id="inputSensorPos" value="1.3" step="0.01" class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-4 pr-8 py-3 text-white font-mono font-bold outline-none focus:border-blue-500 focus:shadow-[0_0_10px_rgba(59,130,246,0.3)] transition-all">
+                            <input type="number" id="inputSensorPos" value="1.8" step="0.01" class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-4 pr-8 py-3 text-white font-mono font-bold outline-none focus:border-blue-500 focus:shadow-[0_0_10px_rgba(59,130,246,0.3)] transition-all">
                             <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-bold">m</span>
                         </div>
                     </div>
                     <div>
                         <label class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-2">Límite Alerta</label>
                         <div class="relative">
-                            <input type="number" id="inputAlerta" value="1.1" step="0.01" class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-4 pr-8 py-3 text-yellow-400 font-mono font-bold outline-none focus:border-yellow-500 focus:shadow-[0_0_10px_rgba(234,179,8,0.3)] transition-all">
+                            <input type="number" id="inputAlerta" value="1.6" step="0.01" class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-4 pr-8 py-3 text-yellow-400 font-mono font-bold outline-none focus:border-yellow-500 focus:shadow-[0_0_10px_rgba(234,179,8,0.3)] transition-all">
                             <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-bold">m</span>
                         </div>
                     </div>
                     <div>
                         <label class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-2">Límite Crítico</label>
                         <div class="relative">
-                            <input type="number" id="inputCritico" value="1.25" step="0.01" class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-4 pr-8 py-3 text-red-400 font-mono font-bold outline-none focus:border-red-500 focus:shadow-[0_0_10px_rgba(239,68,68,0.3)] transition-all">
+                            <input type="number" id="inputCritico" value="1.8" step="0.01" class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-4 pr-8 py-3 text-red-400 font-mono font-bold outline-none focus:border-red-500 focus:shadow-[0_0_10px_rgba(239,68,68,0.3)] transition-all">
                             <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-bold">m</span>
                         </div>
                     </div>
@@ -293,10 +293,10 @@
                 <div class="relative w-32 h-[220px] border-x-4 border-b-4 border-slate-700 rounded-b-lg bg-slate-900 overflow-hidden shadow-[inset_0_4px_20px_rgba(0,0,0,0.8)]">
                     <div class="absolute inset-0 z-10 flex flex-col pointer-events-none">
                         <div id="markerCritico" class="w-full border-b border-red-500/80 border-dashed absolute left-0 flex justify-start items-center">
-                            <span class="text-[8px] font-mono font-bold text-red-400 bg-slate-900/90 px-1.5 py-0.5 rounded border border-red-500/30 ml-1 shadow-md" id="lblCritico">1.25m (C)</span>
+                            <span class="text-[8px] font-mono font-bold text-red-400 bg-slate-900/90 px-1.5 py-0.5 rounded border border-red-500/30 ml-1 shadow-md" id="lblCritico">--</span>
                         </div>
                         <div id="markerAlerta" class="w-full border-b border-yellow-500/80 border-dashed absolute left-0 flex justify-start items-center">
-                            <span class="text-[8px] font-mono font-bold text-yellow-400 bg-slate-900/90 px-1.5 py-0.5 rounded border border-yellow-500/30 ml-1 shadow-md" id="lblAlerta">1.10m (A)</span>
+                            <span class="text-[8px] font-mono font-bold text-yellow-400 bg-slate-900/90 px-1.5 py-0.5 rounded border border-yellow-500/30 ml-1 shadow-md" id="lblAlerta">--</span>
                         </div>
                     </div>
                     <div id="waterLevel" class="absolute bottom-0 left-0 w-full bg-slate-800 water-fill" style="height: 0%;">
@@ -312,11 +312,15 @@
     </main>
 
     <script>
+        // ====================================================================
+        // [NÚCLEO JS CORREGIDO - INTERFAZ HTML/CSS INTACTA]
+        // ====================================================================
+        
         const CONFIG_NODOS = {
             "estacion_01": {
                 nombre: "Canal Principal",
                 camara_ip: "http://192.168.1.50:81/stream", 
-                l: 1.0, h: 1.30, alerta: 1.10, critico: 1.25
+                l: 1.0, h: 1.80, alerta: 1.60, critico: 1.80
             },
             "estacion_02": {
                 nombre: "Desarenador Secundario",
@@ -330,9 +334,6 @@
             }
         };
 
-        // ====================================================================
-        // [INYECTADO]: PARÁMETROS DE SEGURIDAD PARA ACCESO FIREBASE
-        // ====================================================================
         const AUTH_TOKEN = "dnDjcywHxynS29VxdBLPDMo6nF5UC14QShKq4dmc";
         const FIREBASE_BASE = "https://hydrosentinel-b7ad6-default-rtdb.firebaseio.com/nodos/"; 
         
@@ -340,7 +341,6 @@
         let anchoL, sensorPosM, nivelAlertaM, nivelCriticoM;
         let fullDataset = []; 
         let lastDataTime = null;
-        let syncInterval;
 
         function getFirebaseTimestamp(id) {
             if (!id || id.length < 8 || !id.startsWith('-')) return Date.now();
@@ -404,14 +404,13 @@
             async function cargarConfiguracionNodo() {
                 const cfg = CONFIG_NODOS[nodoActivo];
                 try {
-                    // [AJUSTE INYECTADO]: auth=AUTH_TOKEN
                     const resCfg = await fetch(`${FIREBASE_BASE}${nodoActivo}/calibracion.json?auth=${AUTH_TOKEN}`);
                     const dataCfg = await resCfg.json();
                     if(dataCfg) {
-                        cfg.l = dataCfg.l || cfg.l;
-                        cfg.h = dataCfg.h || cfg.h;
-                        cfg.alerta = dataCfg.alerta || cfg.alerta;
-                        cfg.critico = dataCfg.critico || cfg.critico;
+                        cfg.l = parseFloat(dataCfg.l) || cfg.l;
+                        cfg.h = parseFloat(dataCfg.h) || cfg.h;
+                        cfg.alerta = parseFloat(dataCfg.alerta) || cfg.alerta;
+                        cfg.critico = parseFloat(dataCfg.critico) || cfg.critico;
                     }
                 } catch(e) { console.log("Cargando calibración por defecto."); }
 
@@ -433,20 +432,23 @@
 
             async function sync() {
                 try {
+                    // Refrescar variables críticas asegurando tipo numérico (Float)
                     anchoL = parseFloat(document.getElementById('inputAnchoL').value) || 1.0;
-                    sensorPosM = parseFloat(document.getElementById('inputSensorPos').value) || 1.30;
-                    nivelAlertaM = parseFloat(document.getElementById('inputAlerta').value) || 1.10;
-                    nivelCriticoM = parseFloat(document.getElementById('inputCritico').value) || 1.25;
+                    sensorPosM = parseFloat(document.getElementById('inputSensorPos').value) || 1.80;
+                    nivelAlertaM = parseFloat(document.getElementById('inputAlerta').value) || 1.60;
+                    nivelCriticoM = parseFloat(document.getElementById('inputCritico').value) || 1.80;
 
-                    // [AJUSTE INYECTADO]: auth=AUTH_TOKEN en ambas consultas principales
                     const resActual = await fetch(`${FIREBASE_BASE}${nodoActivo}/actual.json?auth=${AUTH_TOKEN}&nocache=${new Date().getTime()}`);
                     const dataActual = await resActual.json();
 
-                    const resHist = await fetch(`${FIREBASE_BASE}${nodoActivo}/historial.json?auth=${AUTH_TOKEN}&limitToLast=1000&nocache=${new Date().getTime()}`);
+                    // SOLUCIÓN HISTORIAL: Se añade el parámetro orderBy="%24key" requerido por la API REST de Firebase
+                    const resHist = await fetch(`${FIREBASE_BASE}${nodoActivo}/historial.json?auth=${AUTH_TOKEN}&orderBy="%24key"&limitToLast=1000&nocache=${new Date().getTime()}`);
                     const dataHist = await resHist.json();
                     
                     if (dataActual) {
-                        updateRealtimeUI(dataActual.nivel);
+                        // Extracción segura del valor numérico
+                        let nivelDato = typeof dataActual === 'object' ? dataActual.nivel : dataActual;
+                        updateRealtimeUI(nivelDato);
                     }
 
                     if (dataHist && typeof dataHist === 'object' && Object.keys(dataHist).length > 0) {
@@ -464,10 +466,9 @@
                         document.getElementById('statusDot').className = "w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]";
                         document.getElementById('syncProgress').className = "bg-blue-500 h-full w-full animate-pulse";
                     } else {
-                        updateOfflineUI("ESPERANDO DATOS", "Nodo nuevo o sin registros...");
+                        updateOfflineUI("ESPERANDO HISTORIAL", "Recolectando datos temporales...");
                     }
 
-                    // [AJUSTE INYECTADO]: auth=AUTH_TOKEN
                     const evRes = await fetch(`${FIREBASE_BASE}${nodoActivo}/evidencia.json?auth=${AUTH_TOKEN}&nocache=${new Date().getTime()}`);
                     const evData = await evRes.json();
                     if(evData && evData.last_photo) {
@@ -476,186 +477,4 @@
                         img.classList.remove('hidden');
                         document.getElementById('evidencePlaceholder').classList.add('hidden');
                         document.getElementById('evidenceData').classList.remove('hidden');
-                        document.getElementById('evidenceDate').innerText = new Date().toLocaleString();
-                        document.getElementById('btnDownloadEvidence').disabled = false;
-                    } else {
-                        document.getElementById('evidenceImage').classList.add('hidden');
-                        document.getElementById('evidencePlaceholder').classList.remove('hidden');
-                        document.getElementById('evidenceData').classList.add('hidden');
-                        document.getElementById('btnDownloadEvidence').disabled = true;
-                    }
-                } catch (e) {
-                    updateOfflineUI("SINCRONIZANDO", "Estableciendo enlace de red...");
-                }
-            }
-
-            function updateRealtimeUI(nivelCm) {
-                const now = Date.now();
-                const valNivel = isNaN(nivelCm) ? 0 : nivelCm;
-                const nivelM = valNivel / 100.0;
-                
-                document.getElementById('currentLevel').innerText = valNivel;
-                document.getElementById('currentLevel').className = "text-5xl font-black text-blue-400 transition-colors drop-shadow-[0_0_15px_rgba(96,165,250,0.4)]";
-                document.getElementById('lastSync').innerText = lastDataTime ? new Date(lastDataTime).toLocaleTimeString() : "--:--:--";
-                
-                let q = (nivelM <= 0) ? 0 : 1.45 * anchoL * Math.pow(nivelM, 1.5);
-                document.getElementById('currentFlow').innerText = q.toFixed(3);
-                document.getElementById('currentFlow').className = "text-5xl font-black text-cyan-400 transition-colors drop-shadow-[0_0_15px_rgba(34,211,238,0.4)]";
-                
-                const water = document.getElementById('waterLevel');
-                const stTitle = document.getElementById('systemStatus');
-                const stIcon = document.getElementById('statusIcon');
-                const stDesc = document.getElementById('statusDesc');
-                
-                water.style.height = `${(nivelM / sensorPosM) * 100}%`;
-                document.getElementById('markerCritico').style.top = `${(1 - (nivelCriticoM / sensorPosM)) * 100}%`;
-                document.getElementById('markerAlerta').style.top = `${(1 - (nivelAlertaM / sensorPosM)) * 100}%`;
-                document.getElementById('lblCritico').innerText = `${nivelCriticoM.toFixed(2)}m (C)`;
-                document.getElementById('lblAlerta').innerText = `${nivelAlertaM.toFixed(2)}m (A)`;
-                document.getElementById('displayParamsL').innerText = `L: ${anchoL.toFixed(1)}m`;
-                document.getElementById('displayParamsH').innerText = `H: ${sensorPosM.toFixed(1)}m`;
-
-                if (valNivel <= 0) {
-                    water.className = "absolute bottom-0 left-0 w-full bg-slate-800/50 water-fill border-t border-slate-700 border-dashed";
-                    stTitle.innerText = "ESPERANDO CONEXIÓN";
-                    stDesc.innerText = "Recolectando datos del limnígrafo...";
-                    stIcon.className = "p-3 bg-amber-500/20 border border-amber-500/40 rounded-xl text-amber-400";
-                    stIcon.innerHTML = '<i data-lucide="satellite" class="animate-pulse"></i>';
-                } else if (nivelM >= nivelCriticoM) {
-                    water.className = "absolute bottom-0 left-0 w-full bg-red-600/90 water-fill shadow-[0_-5px_25px_rgba(220,38,38,0.6)]";
-                    stTitle.innerText = "PELIGRO CRÍTICO";
-                    stDesc.innerText = "Desbordamiento inminente en nodo";
-                    stIcon.className = "p-3 bg-red-500/20 border border-red-500/40 rounded-xl text-red-400 animate-pulse";
-                    stIcon.innerHTML = '<i data-lucide="alert-triangle"></i>';
-                } else if (nivelM >= nivelAlertaM) {
-                    water.className = "absolute bottom-0 left-0 w-full bg-yellow-500/90 water-fill shadow-[0_-5px_25px_rgba(234,179,8,0.4)]";
-                    stTitle.innerText = "ALERTA OPERATIVA";
-                    stDesc.innerText = "Nivel en observación técnica";
-                    stIcon.className = "p-3 bg-yellow-500/20 border border-yellow-500/40 rounded-xl text-yellow-400";
-                    stIcon.innerHTML = '<i data-lucide="alert-circle"></i>';
-                } else {
-                    water.className = "absolute bottom-0 left-0 w-full bg-blue-500/80 water-fill shadow-[0_-5px_25px_rgba(59,130,246,0.3)]";
-                    stTitle.innerText = "ESTADO ESTABLE";
-                    stDesc.innerText = "Condiciones de flujo normal";
-                    stIcon.className = "p-3 bg-emerald-500/20 border border-emerald-500/40 rounded-xl text-emerald-400";
-                    stIcon.innerHTML = '<i data-lucide="check-circle"></i>';
-                }
-                lucide.createIcons();
-            }
-
-            function updateOfflineUI(titulo, desc) {
-                document.getElementById('systemStatus').innerText = titulo;
-                document.getElementById('statusDesc').innerText = desc;
-                document.getElementById('statusIcon').innerHTML = '<i data-lucide="satellite" class="w-8 h-8 animate-pulse"></i>';
-                document.getElementById('currentLevel').innerText = "--";
-                document.getElementById('currentFlow').innerText = "--";
-                document.getElementById('waterLevel').style.height = "0%";
-                lucide.createIcons();
-            }
-
-            function renderData() {
-                const period = document.getElementById('histPeriod').value;
-                const metric = document.getElementById('histMetric').value;
-                let filtered = [...fullDataset];
-                let intervalMs = 15 * 60 * 1000;
-
-                if (period === 'today') {
-                    filtered = fullDataset.filter(d => d.timestamp >= new Date().setHours(0,0,0,0));
-                } else if (period === '7d') {
-                    filtered = fullDataset.filter(d => d.timestamp >= Date.now() - (7 * 24 * 60 * 60 * 1000));
-                    intervalMs = 4 * 60 * 60 * 1000;
-                } else if (period === '1m') {
-                    filtered = fullDataset.filter(d => d.timestamp >= Date.now() - (30 * 24 * 60 * 60 * 1000));
-                    intervalMs = 24 * 60 * 60 * 1000;
-                }
-
-                const processAggregation = (dataToProcess) => {
-                    const aggregated = [];
-                    const groups = {};
-                    let sumTotal = 0, maxTotal = 0;
-
-                    dataToProcess.forEach(d => {
-                        const bucket = Math.floor(d.timestamp / intervalMs) * intervalMs;
-                        if (!groups[bucket]) groups[bucket] = { levels: [], timestamp: bucket };
-                        groups[bucket].levels.push(d.nivel);
-                        sumTotal += d.nivel;
-                        if (d.nivel > maxTotal) maxTotal = d.nivel;
-                    });
-
-                    if (dataToProcess.length > 0) {
-                        const avgTotal = sumTotal / dataToProcess.length;
-                        document.getElementById('lblAvgNivel').innerText = `${avgTotal.toFixed(1)} cm`;
-                        document.getElementById('lblMaxPico').innerText = `${maxTotal.toFixed(1)} cm`;
-                        const flowTotal = 1.45 * anchoL * Math.pow(avgTotal / 100, 1.5);
-                        document.getElementById('lblAvgCaudal').innerText = `${isNaN(flowTotal) ? '0.000' : flowTotal.toFixed(3)} m³/s`;
-                    }
-
-                    Object.values(groups).forEach(g => {
-                        const avg = g.levels.reduce((a,b) => a+b, 0) / g.levels.length;
-                        const q = (1.45 * anchoL * Math.pow(avg/100, 1.5));
-                        aggregated.push({ timestamp: g.timestamp, avg, max: Math.max(...g.levels), caudal: isNaN(q) ? 0 : q });
-                    });
-
-                    advancedChart.data.labels = aggregated.map(d => new Date(d.timestamp).toLocaleDateString('es-ES', {day:'2-digit', month:'short'}));
-                    advancedChart.data.datasets[0].data = aggregated.map(d => (metric === 'nivel' ? d.avg.toFixed(1) : d.caudal.toFixed(3)));
-                    advancedChart.update();
-
-                    document.getElementById('tablaReportes').innerHTML = aggregated.slice(-15).reverse().map(d => `
-                        <tr class="hover:bg-slate-800/60 transition-colors cursor-pointer group" onclick="verDetalleDia(${d.timestamp})">
-                            <td class="px-6 py-4 font-mono text-slate-400">${new Date(d.timestamp).toLocaleString('es-ES', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'})}</td>
-                            <td class="px-6 py-4 text-center font-bold text-slate-300">${d.avg.toFixed(1)} cm</td>
-                            <td class="px-6 py-4 text-center font-black text-white">${d.max} cm</td>
-                            <td class="px-6 py-4 text-center font-mono font-bold text-cyan-400">${d.caudal.toFixed(3)}</td>
-                            <td class="px-6 py-4"><span class="px-2.5 py-1 rounded-sm text-[9px] font-bold tracking-widest uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">ESTABLE</span></td>
-                            <td class="px-6 py-4 text-center"><span class="bg-blue-500/10 text-blue-400 px-3 py-1.5 rounded-lg border border-blue-500/30 text-[9px] font-bold uppercase tracking-wider group-hover:bg-blue-500 group-hover:text-white transition-all">Ver Día <i data-lucide="search" class="inline w-3 h-3 ml-1"></i></span></td>
-                        </tr>`).join('');
-                    lucide.createIcons();
-                };
-                processAggregation(filtered);
-            }
-
-            document.getElementById('nodoSelector').addEventListener('change', (e) => {
-                nodoActivo = e.target.value;
-                cargarConfiguracionNodo().then(sync);
-            });
-
-            document.getElementById('btnApply').addEventListener('click', async () => {
-                const configJSON = JSON.stringify({
-                    l: parseFloat(document.getElementById('inputAnchoL').value),
-                    h: parseFloat(document.getElementById('inputSensorPos').value),
-                    alerta: parseFloat(document.getElementById('inputAlerta').value),
-                    critico: parseFloat(document.getElementById('inputCritico').value)
-                });
-                try {
-                    // [AJUSTE INYECTADO]: auth=AUTH_TOKEN
-                    await fetch(`${FIREBASE_BASE}${nodoActivo}/calibracion.json?auth=${AUTH_TOKEN}`, { method: 'PUT', body: configJSON });
-                    sync();
-                } catch (e) { console.error("Fallo SCADA: ", e); }
-            });
-
-            document.getElementById('histPeriod').addEventListener('change', renderData);
-            document.getElementById('histMetric').addEventListener('change', renderData);
-            cargarConfiguracionNodo().then(() => {
-                sync();
-                setInterval(sync, 15000); 
-            });
-        });
-    </script>
-</body>
-</html>
-```
-
-### ¿Cómo soluciona esto el problema de comunicación?
-
-En la arquitectura de **HydroSentinel v4.0**, aunque el puente de Google Apps Script está inyectando los datos con éxito, el Dashboard web es un cliente independiente. Sin este ajuste, el navegador recibía un error **401 Unauthorized** cada vez que intentaba actualizar el tanque o la gráfica.
-
-Para que puedas visualizar exactamente dónde estaba la obstrucción, he preparado este depurador de flujo. Observa qué sucede cuando la "Llave de Acceso" no está presente en la petición del Dashboard:
-
-```json?chameleon
-{
-  "component": "LlmGeneratedComponent",
-  "props": {
-    "height": "700px",
-    "prompt": "Un depurador de flujo de datos para un sistema IoT. Debe mostrar un camino con 4 estaciones: 1. ESP32, 2. Google Apps Script Bridge, 3. Firebase Database, 4. Dashboard Web. \n\nEl usuario tiene un interruptor: 'Incluir Token en Dashboard'. \n\nCuando el interruptor está OFF: Los paquetes viajan de ESP32 a Firebase correctamente (se ven luces verdes), pero cuando el Dashboard intenta pedir datos a Firebase, rebota una señal roja de 'Error 401'. El Dashboard se muestra vacío.\nCuando el interruptor está ON: La petición del Dashboard incluye una 'llave' dorada, Firebase permite el paso de datos y el Dashboard se ilumina con gráficas.\n\nControles: Interruptor de Token, Botón de 'Simular Lectura de Sensor'.\nVisual: Estética tecnológica, flujos de datos como líneas de luz."
-  }
-}
+                        document
