@@ -36,6 +36,14 @@
             background-color: rgba(59, 130, 246, 0.15) !important;
             border-left: 4px solid #3b82f6 !important;
         }
+
+        /* --- MOTOR DE ANIMACIÓN DE OLEAJE --- */
+        @keyframes wave {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        .wave-anim { animation: wave 4s linear infinite; }
+        .wave-anim-fast { animation: wave 2.5s linear infinite; }
     </style>
 </head>
 <body class="bg-slate-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0a0f1c] to-black min-h-screen text-slate-300 font-sans pb-12">
@@ -49,11 +57,22 @@
                 <h1 class="text-xl md:text-2xl font-black tracking-wider truncate text-slate-100">HydroSentinel <span class="hidden lg:inline text-blue-500 text-xs font-bold ml-2 uppercase tracking-widest px-2 py-1 bg-blue-500/10 rounded border border-blue-500/20">v4.0 Flota Global</span></h1>
             </div>
             
-            <div class="flex items-center gap-3 w-full md:w-auto bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-700 shadow-inner">
-                <i data-lucide="map-pin" class="w-4 h-4 text-slate-400"></i>
-                <select id="nodoSelector" class="bg-transparent border-none text-slate-200 text-xs font-bold outline-none cursor-pointer w-full md:w-48 appearance-none focus:ring-0 [color-scheme:dark]">
-                </select>
-                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500 pointer-events-none"></i>
+            <div class="flex items-center gap-3 w-full md:w-auto">
+                <div class="flex items-center gap-2 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-700 shadow-inner">
+                    <i data-lucide="arrow-left-right" class="w-4 h-4 text-slate-400"></i>
+                    <select id="unitSelector" class="bg-transparent border-none text-blue-400 text-xs font-bold outline-none cursor-pointer appearance-none focus:ring-0 [color-scheme:dark]">
+                        <option value="standard" class="bg-slate-900 text-blue-400">cm | m³/s</option>
+                        <option value="alt" class="bg-slate-900 text-blue-400">m | L/s</option>
+                    </select>
+                    <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500 pointer-events-none"></i>
+                </div>
+
+                <div class="flex items-center gap-2 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-700 shadow-inner">
+                    <i data-lucide="map-pin" class="w-4 h-4 text-slate-400"></i>
+                    <select id="nodoSelector" class="bg-transparent border-none text-slate-200 text-xs font-bold outline-none cursor-pointer w-full md:w-36 appearance-none focus:ring-0 [color-scheme:dark]">
+                    </select>
+                    <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500 pointer-events-none"></i>
+                </div>
             </div>
 
             <div class="flex items-center space-x-2 bg-slate-900 px-4 py-1.5 rounded-full text-xs md:text-sm border border-slate-800 shadow-inner w-full md:w-auto justify-center">
@@ -73,7 +92,7 @@
                 </p>
                 <div class="flex items-baseline space-x-2 mt-2 relative z-10">
                     <h2 class="text-5xl font-black text-slate-700 transition-colors duration-500 drop-shadow-lg" id="currentLevel">--</h2>
-                    <span class="text-xl text-slate-500 font-bold">cm</span>
+                    <span class="text-xl text-slate-500 font-bold" id="unitLblNivel">cm</span>
                 </div>
             </div>
             <div class="glass-dark rounded-2xl shadow-xl p-6 relative group hover:border-cyan-500/30 transition-colors">
@@ -83,7 +102,7 @@
                 </p>
                 <div class="flex items-baseline space-x-2 mt-2 relative z-10">
                     <h2 class="text-5xl font-black text-slate-700 transition-colors duration-500 drop-shadow-lg" id="currentFlow">--</h2>
-                    <span class="text-xl text-slate-500 font-bold">m³/s</span>
+                    <span class="text-xl text-slate-500 font-bold" id="unitLblCaudal">m³/s</span>
                 </div>
             </div>
             <div class="glass-dark rounded-2xl shadow-xl p-6 relative">
@@ -172,7 +191,7 @@
                 </h3>
                 <div class="flex flex-wrap items-center gap-3 bg-slate-900/80 p-2 rounded-xl border border-slate-800 shadow-inner">
                     <select id="histPeriod" class="bg-slate-950 border border-slate-700 text-slate-300 text-[10px] font-bold rounded-lg px-3 py-2 cursor-pointer outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors">
-                        <option value="today">Hoy (Resumen 15m)</option>
+                        <option value="today">Hoy (Lecturas al Minuto)</option>
                         <option value="7d">Últimos 7 Días</option>
                         <option value="1m" selected>Último Mes (30 Días)</option>
                         <option value="custom">Rango Personalizado 📅</option>
@@ -186,8 +205,8 @@
                     </div>
 
                     <select id="histMetric" class="bg-slate-950 border border-slate-700 text-slate-300 text-[10px] font-bold rounded-lg px-3 py-2 cursor-pointer outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors">
-                        <option value="nivel">Niveles (cm)</option>
-                        <option value="caudal">Caudal (m³/s)</option>
+                        <option value="nivel" id="optMetNivel">Niveles (cm)</option>
+                        <option value="caudal" id="optMetCaudal">Caudal (m³/s)</option>
                     </select>
                 </div>
             </div>
@@ -216,8 +235,17 @@
                 </div>
             </div>
 
-            <div class="relative h-80 w-full">
-                <canvas id="advancedHistoricalChart"></canvas>
+            <div class="relative h-80 w-full flex bg-slate-900/30 rounded-xl border border-slate-800 overflow-hidden shadow-inner flex-row">
+                
+                <div class="flex-grow overflow-x-auto custom-scrollbar" id="chartWrapper">
+                    <div id="chartScrollArea" class="h-full" style="min-width: 100%;">
+                        <canvas id="advancedHistoricalChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="w-20 flex-shrink-0 bg-slate-950/90 z-20 border-l border-slate-800 relative shadow-[-5px_0_15px_-5px_rgba(0,0,0,0.5)]">
+                    <canvas id="yAxisChart"></canvas>
+                </div>
             </div>
         </div>
 
@@ -227,15 +255,15 @@
                     <i data-lucide="file-text" class="w-4 h-4 text-blue-500"></i> Registro Analítico <span id="lblTablaNodo"></span> (Clic para Detalles del Día)
                 </h3>
             </div>
-            <div class="overflow-x-auto custom-scrollbar bg-slate-950/30">
-                <table class="w-full text-left text-sm whitespace-nowrap">
-                    <thead class="bg-slate-900/80 text-slate-500 font-bold uppercase text-[9px] tracking-widest border-b border-slate-800">
+            <div class="overflow-x-auto custom-scrollbar bg-slate-950/30 max-h-96">
+                <table class="w-full text-left text-sm whitespace-nowrap relative">
+                    <thead class="bg-slate-900/90 backdrop-blur-sm text-slate-500 font-bold uppercase text-[9px] tracking-widest border-b border-slate-800 sticky top-0 z-10">
                         <tr>
-                            <th class="px-6 py-4">Fecha / Periodo</th>
-                            <th class="px-6 py-4 text-center">Nivel Prom. (cm)</th>
-                            <th class="px-6 py-4 text-center">Pico Máx. (cm)</th>
-                            <th class="px-6 py-4 text-center">Caudal Est. (m³/s)</th>
-                            <th class="px-6 py-4">Estado Red</th>
+                            <th class="px-6 py-4">Fecha / Hora</th>
+                            <th class="px-6 py-4 text-center" id="thNivel">Nivel Prom. (cm)</th>
+                            <th class="px-6 py-4 text-center" id="thPico">Pico Máx. (cm)</th>
+                            <th class="px-6 py-4 text-center" id="thCaudal">Caudal Est. (m³/s)</th>
+                            <th class="px-6 py-4">Estado Alerta</th>
                             <th class="px-6 py-4 text-center">Acción</th>
                         </tr>
                     </thead>
@@ -291,7 +319,11 @@
             <div class="glass-dark rounded-2xl shadow-xl p-6 lg:col-span-1 flex flex-col items-center">
                 <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest w-full text-center mb-6 bg-slate-800/50 py-2 rounded-lg border border-slate-700/50">Modelo Digital</h3>
                 <div class="relative w-32 h-[220px] border-x-4 border-b-4 border-slate-700 rounded-b-lg bg-slate-900 overflow-hidden shadow-[inset_0_4px_20px_rgba(0,0,0,0.8)]">
-                    <div class="absolute inset-0 z-10 flex flex-col pointer-events-none">
+                    
+                    <div class="absolute inset-0 z-20 flex flex-col pointer-events-none">
+                        <div id="markerSensor" class="w-full border-b-2 border-blue-400/80 absolute left-0 flex justify-start items-center" style="top: 0%;">
+                            <span class="text-[8px] font-mono font-bold text-blue-300 bg-slate-900/90 px-1.5 py-0.5 rounded border border-blue-500/30 ml-1 shadow-md" id="lblSensor">--</span>
+                        </div>
                         <div id="markerCritico" class="w-full border-b border-red-500/80 border-dashed absolute left-0 flex justify-start items-center">
                             <span class="text-[8px] font-mono font-bold text-red-400 bg-slate-900/90 px-1.5 py-0.5 rounded border border-red-500/30 ml-1 shadow-md" id="lblCritico">--</span>
                         </div>
@@ -299,8 +331,20 @@
                             <span class="text-[8px] font-mono font-bold text-yellow-400 bg-slate-900/90 px-1.5 py-0.5 rounded border border-yellow-500/30 ml-1 shadow-md" id="lblAlerta">--</span>
                         </div>
                     </div>
-                    <div id="waterLevel" class="absolute bottom-0 left-0 w-full bg-slate-800 water-fill" style="height: 0%;">
-                        <div class="absolute top-0 left-0 w-full h-1 bg-white/20"></div>
+                    
+                    <div id="waterLevel" class="absolute bottom-0 left-0 w-full bg-slate-800 text-slate-800 water-fill flex flex-col items-center justify-start z-10" style="height: 0%;">
+                        
+                        <div class="absolute top-0 left-0 w-[200%] h-3 -translate-y-full flex wave-anim text-inherit opacity-50">
+                            <svg class="w-1/2 h-full fill-current" preserveAspectRatio="none" viewBox="0 0 1200 120"><path d="M0,50 C150,150 350,-50 600,50 C850,150 1050,-50 1200,50 L1200,120 L0,120 Z"></path></svg>
+                            <svg class="w-1/2 h-full fill-current -ml-[1px]" preserveAspectRatio="none" viewBox="0 0 1200 120"><path d="M0,50 C150,150 350,-50 600,50 C850,150 1050,-50 1200,50 L1200,120 L0,120 Z"></path></svg>
+                        </div>
+                        
+                        <div class="absolute top-0 left-0 w-[200%] h-4 -translate-y-[95%] flex wave-anim-fast text-inherit">
+                            <svg class="w-1/2 h-full fill-current" preserveAspectRatio="none" viewBox="0 0 1200 120"><path d="M0,50 C150,150 350,-50 600,50 C850,150 1050,-50 1200,50 L1200,120 L0,120 Z"></path></svg>
+                            <svg class="w-1/2 h-full fill-current -ml-[1px]" preserveAspectRatio="none" viewBox="0 0 1200 120"><path d="M0,50 C150,150 350,-50 600,50 C850,150 1050,-50 1200,50 L1200,120 L0,120 Z"></path></svg>
+                        </div>
+                        
+                        <span id="waterPercent" class="text-[9px] font-mono font-bold text-white/70 tracking-widest mt-2 relative z-10"></span>
                     </div>
                 </div>
                 <div class="mt-5 w-full flex justify-between px-2 bg-slate-900/80 py-2 rounded border border-slate-800">
@@ -313,8 +357,11 @@
 
     <script>
         // ====================================================================
-        // [NÚCLEO JS BLINDADO MODULARMENTE - EXTRACCIÓN DE TANQUE DIGITAL CORREGIDA]
+        // [NÚCLEO JS BLINDADO MODULARMENTE - ALINEACIÓN Y CAMPO DE FUERZA EJE Y]
         // ====================================================================
+        
+        window.forceScrollToEnd = true;
+
         const CONFIG_NODOS = {
             "estacion_01": {
                 nombre: "Canal Principal",
@@ -340,6 +387,9 @@
         let anchoL, sensorPosM, nivelAlertaM, nivelCriticoM;
         let fullDataset = []; 
         let lastDataTime = null;
+        
+        let unitSystem = 'standard'; 
+        let lastRawNivel = 0; 
 
         function getFirebaseTimestamp(id) {
             if (!id || id.length < 8 || !id.startsWith('-')) return Date.now();
@@ -363,7 +413,11 @@
 
         window.verDetalleDia = function(timestamp) {
             const fecha = new Date(timestamp);
-            const dateStr = fecha.toISOString().split('T')[0];
+            const year = fecha.getFullYear();
+            const month = String(fecha.getMonth() + 1).padStart(2, '0');
+            const day = String(fecha.getDate()).padStart(2, '0');
+            const dateStr = `${year}-${month}-${day}`;
+            
             document.getElementById('histPeriod').value = "custom";
             document.getElementById('customDateRange').classList.remove('hidden');
             document.getElementById('dateStart').value = dateStr;
@@ -383,18 +437,90 @@
                 selectNodo.appendChild(option);
             }
 
-            const ctxHist = document.getElementById('advancedHistoricalChart')?.getContext('2d');
+            document.getElementById('unitSelector').addEventListener('change', (e) => {
+                unitSystem = e.target.value;
+                
+                const isStd = unitSystem === 'standard';
+                document.getElementById('unitLblNivel').innerText = isStd ? 'cm' : 'm';
+                document.getElementById('unitLblCaudal').innerText = isStd ? 'm³/s' : 'L/s';
+                document.getElementById('thNivel').innerText = `Nivel Prom. (${isStd ? 'cm' : 'm'})`;
+                document.getElementById('thPico').innerText = `Pico Máx. (${isStd ? 'cm' : 'm'})`;
+                document.getElementById('thCaudal').innerText = `Caudal Est. (${isStd ? 'm³/s' : 'L/s'})`;
+                document.getElementById('optMetNivel').innerText = `Niveles (${isStd ? 'cm' : 'm'})`;
+                document.getElementById('optMetCaudal').innerText = `Caudal (${isStd ? 'm³/s' : 'L/s'})`;
+                
+                updateRealtimeUI(lastRawNivel);
+                renderData();
+            });
+
             Chart.defaults.color = '#94a3b8';
             Chart.defaults.font.family = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace';
             
+            // 1. GRÁFICA DEL EJE Y (Fija, Ampliada y con Campo de Fuerza a la derecha)
+            const ctxY = document.getElementById('yAxisChart')?.getContext('2d');
+            let yAxisChart = new Chart(ctxY, {
+                type: 'line',
+                data: { labels: [], datasets: [{ data: [], borderColor: 'transparent', pointRadius: 0, fill: false }] },
+                options: { 
+                    responsive: true, maintainAspectRatio: false, animation: false,
+                    // CLAVE: padding.right en 20 garantiza que ningún número toque el borde derecho
+                    layout: { padding: { top: 30, bottom: 0, left: 0, right: 20 } },
+                    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                    interaction: { mode: null },
+                    scales: { 
+                        x: { 
+                            grid: { display: false, drawBorder: false }, 
+                            ticks: { font: { size: 10 }, color: 'transparent', maxRotation: 0 } 
+                        }, 
+                        y: { 
+                            position: 'right', 
+                            min: 0, 
+                            grid: { display: false, drawBorder: false }, 
+                            ticks: { 
+                                font: { size: 10, weight: 'bold' }, 
+                                color: '#38bdf8', 
+                                padding: 5,
+                                // CLAVE: 'near' asegura que el número nazca cerca del borde izquierdo de su propio contenedor
+                                crossAlign: 'near'
+                            } 
+                        } 
+                    }
+                }
+            });
+
+            // 2. GRÁFICA PRINCIPAL
+            const ctxHist = document.getElementById('advancedHistoricalChart')?.getContext('2d');
             let advancedChart = new Chart(ctxHist, {
                 type: 'line',
-                data: { labels: [], datasets: [{ label: 'Nivel Promedio', data: [], borderColor: '#38bdf8', backgroundColor: 'rgba(56, 189, 248, 0.1)', borderWidth: 2, pointBackgroundColor: '#0284c7', pointBorderColor: '#38bdf8', pointRadius: 2, fill: true, tension: 0.4 }] },
+                data: { labels: [], datasets: [{ label: 'Valor Promedio', data: [], borderColor: '#38bdf8', backgroundColor: 'rgba(56, 189, 248, 0.1)', borderWidth: 2, pointBackgroundColor: '#0284c7', pointBorderColor: '#38bdf8', pointRadius: 2, fill: true, tension: 0.4 }] },
                 options: { 
                     responsive: true, maintainAspectRatio: false,
-                    scales: { y: { min: 0, beginAtZero: true, grid: { color: 'rgba(51, 65, 85, 0.5)' }, ticks: { font: { size: 10 } } }, x: { grid: { color: 'rgba(51, 65, 85, 0.3)' }, ticks: { font: { size: 10 }, maxRotation: 0 } } },
-                    plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.9)', titleColor: '#e2e8f0', bodyColor: '#cbd5e1', borderColor: '#334155', borderWidth: 1 } },
-                    interaction: { mode: 'index', intersect: false }
+                    layout: { padding: { top: 30, bottom: 0, left: 10, right: 0 } },
+                    plugins: { 
+                        legend: { display: false }, 
+                        tooltip: { 
+                            backgroundColor: 'rgba(15, 23, 42, 0.9)', 
+                            titleColor: '#e2e8f0', 
+                            bodyColor: '#cbd5e1', 
+                            borderColor: '#334155', 
+                            borderWidth: 1,
+                            yAlign: 'bottom', 
+                            caretPadding: 12  
+                        } 
+                    },
+                    interaction: { mode: 'index', intersect: false },
+                    scales: { 
+                        x: { 
+                            grid: { color: 'rgba(51, 65, 85, 0.3)' }, 
+                            ticks: { font: { size: 10 }, maxRotation: 0 } 
+                        }, 
+                        y: { 
+                            position: 'right', 
+                            min: 0, 
+                            grid: { color: 'rgba(51, 65, 85, 0.4)', drawBorder: false }, 
+                            ticks: { display: false } 
+                        } 
+                    }
                 }
             });
 
@@ -423,7 +549,21 @@
                 imgFeed.src = cfg.camara_ip;
                 imgFeed.classList.remove('hidden');
                 document.getElementById('videoPlaceholder').classList.add('hidden');
+                
                 fullDataset = [];
+                lastDataTime = null;
+                lastRawNivel = 0;
+                
+                const imgEvidencia = document.getElementById('evidenceImage');
+                imgEvidencia.src = "";
+                imgEvidencia.classList.add('hidden');
+                document.getElementById('evidencePlaceholder').classList.remove('hidden');
+                document.getElementById('evidenceData').classList.add('hidden');
+                document.getElementById('btnDownloadEvidence').disabled = true;
+
+                window.forceScrollToEnd = true;
+                renderData(); 
+                
                 updateOfflineUI("CARGANDO NODO", "Sincronizando con satélite...");
             }
 
@@ -435,40 +575,27 @@
 
                 let conexionActiva = false;
 
-                // ====================================================
-                // 1. BLOQUE BLINDADO: LECTURA DE TANQUE DIGITAL
-                // ====================================================
                 try {
                     const resActual = await fetch(`${FIREBASE_BASE}${nodoActivo}/actual.json?auth=${AUTH_TOKEN}&nocache=${new Date().getTime()}`);
                     if (resActual.ok) {
                         const dataActual = await resActual.json();
-                        
                         if (dataActual !== null && dataActual !== undefined) {
                             let nivelDato = 0;
-                            
-                            // Algoritmo de extracción a prueba de fallos:
-                            if (typeof dataActual === 'object' && 'nivel' in dataActual) {
-                                nivelDato = dataActual.nivel; 
-                            } else if (!isNaN(dataActual)) {
-                                nivelDato = dataActual; 
-                            } else if (typeof dataActual === 'object') {
+                            if (typeof dataActual === 'object' && 'nivel' in dataActual) nivelDato = dataActual.nivel; 
+                            else if (!isNaN(dataActual)) nivelDato = dataActual; 
+                            else if (typeof dataActual === 'object') {
                                 const vals = Object.values(dataActual);
-                                if(vals.length > 0 && typeof vals[0] === 'object' && 'nivel' in vals[0]) {
-                                    nivelDato = vals[0].nivel;
-                                } else if (vals.length > 0 && !isNaN(vals[0])) {
-                                    nivelDato = vals[0];
-                                }
+                                if(vals.length > 0 && typeof vals[0] === 'object' && 'nivel' in vals[0]) nivelDato = vals[0].nivel;
+                                else if (vals.length > 0 && !isNaN(vals[0])) nivelDato = vals[0];
                             }
-
-                            updateRealtimeUI(nivelDato);
+                            
+                            lastRawNivel = nivelDato;
+                            updateRealtimeUI(lastRawNivel);
                             conexionActiva = true;
                         }
                     }
-                } catch (e) { console.error("Fallo lectura en vivo", e); }
+                } catch (e) { console.error("Fallo lectura en vivo"); }
 
-                // ====================================================
-                // 2. BLOQUE BLINDADO: LECTURA HISTÓRICA (Gráficas)
-                // ====================================================
                 try {
                     const resHist = await fetch(`${FIREBASE_BASE}${nodoActivo}/historial.json?auth=${AUTH_TOKEN}&orderBy=%22%24key%22&limitToLast=1000&nocache=${new Date().getTime()}`);
                     if (resHist.ok) {
@@ -484,13 +611,12 @@
                             lastDataTime = last.timestamp; 
                             renderData(); 
                             conexionActiva = true;
+                        } else {
+                            renderData();
                         }
                     }
-                } catch (e) { console.error("Fallo lectura histórica", e); }
+                } catch (e) { console.error("Fallo lectura histórica"); }
 
-                // ====================================================
-                // 3. BLOQUE BLINDADO: EVIDENCIA
-                // ====================================================
                 try {
                     const evRes = await fetch(`${FIREBASE_BASE}${nodoActivo}/evidencia.json?auth=${AUTH_TOKEN}&nocache=${new Date().getTime()}`);
                     if (evRes.ok) {
@@ -505,7 +631,7 @@
                             document.getElementById('btnDownloadEvidence').disabled = false;
                         }
                     }
-                } catch (e) { console.error("Fallo lectura cámara", e); }
+                } catch (e) { console.error("Fallo lectura cámara"); }
 
                 if (conexionActiva) {
                     document.getElementById('connectionStatus').innerText = "ENLACE NOC ACTIVO";
@@ -520,13 +646,19 @@
                 const valNivel = isNaN(parseFloat(nivelCm)) ? 0 : parseFloat(nivelCm);
                 const nivelM = valNivel / 100.0;
                 
-                document.getElementById('currentLevel').innerText = valNivel;
-                document.getElementById('currentLevel').className = "text-5xl font-black text-blue-400 transition-colors drop-shadow-[0_0_15px_rgba(96,165,250,0.4)]";
-                document.getElementById('lastSync').innerText = lastDataTime ? new Date(lastDataTime).toLocaleTimeString() : new Date().toLocaleTimeString();
+                const isStd = unitSystem === 'standard';
+                const valNivelDisplay = isStd ? valNivel : nivelM;
                 
                 let q = (nivelM <= 0) ? 0 : 1.45 * anchoL * Math.pow(nivelM, 1.5);
-                document.getElementById('currentFlow').innerText = q.toFixed(3);
+                const qDisplay = isStd ? q : (q * 1000);
+                
+                document.getElementById('currentLevel').innerText = isStd ? valNivelDisplay.toFixed(0) : valNivelDisplay.toFixed(2);
+                document.getElementById('currentLevel').className = "text-5xl font-black text-blue-400 transition-colors drop-shadow-[0_0_15px_rgba(96,165,250,0.4)]";
+                
+                document.getElementById('currentFlow').innerText = isStd ? qDisplay.toFixed(3) : qDisplay.toFixed(1);
                 document.getElementById('currentFlow').className = "text-5xl font-black text-cyan-400 transition-colors drop-shadow-[0_0_15px_rgba(34,211,238,0.4)]";
+                
+                document.getElementById('lastSync').innerText = lastDataTime ? new Date(lastDataTime).toLocaleTimeString() : new Date().toLocaleTimeString();
                 
                 const water = document.getElementById('waterLevel');
                 const stTitle = document.getElementById('systemStatus');
@@ -534,39 +666,41 @@
                 const stDesc = document.getElementById('statusDesc');
                 
                 let porcentajeLlenado = (nivelM / sensorPosM) * 100;
-                porcentajeLlenado = Math.min(100, Math.max(0, porcentajeLlenado)); // Clamping seguro del CSS
+                porcentajeLlenado = Math.min(100, Math.max(0, porcentajeLlenado)); 
                 water.style.height = `${porcentajeLlenado}%`;
                 
-                let topCritico = (1 - (nivelCriticoM / sensorPosM)) * 100;
-                let topAlerta = (1 - (nivelAlertaM / sensorPosM)) * 100;
+                document.getElementById('waterPercent').innerText = porcentajeLlenado.toFixed(1) + '%';
+                
+                document.getElementById('lblSensor').innerText = `${sensorPosM.toFixed(2)}m (S)`;
+                let topCritico = ((sensorPosM - nivelCriticoM) / sensorPosM) * 100;
+                let topAlerta = ((sensorPosM - nivelAlertaM) / sensorPosM) * 100;
                 document.getElementById('markerCritico').style.top = `${Math.max(0, topCritico)}%`;
                 document.getElementById('markerAlerta').style.top = `${Math.max(0, topAlerta)}%`;
-                
                 document.getElementById('lblCritico').innerText = `${nivelCriticoM.toFixed(2)}m (C)`;
                 document.getElementById('lblAlerta').innerText = `${nivelAlertaM.toFixed(2)}m (A)`;
                 document.getElementById('displayParamsL').innerText = `L: ${anchoL.toFixed(1)}m`;
                 document.getElementById('displayParamsH').innerText = `H: ${sensorPosM.toFixed(1)}m`;
 
                 if (valNivel <= 0) {
-                    water.className = "absolute bottom-0 left-0 w-full bg-slate-800/50 water-fill border-t border-slate-700 border-dashed";
+                    water.className = "absolute bottom-0 left-0 w-full bg-slate-800/80 text-slate-800/80 water-fill flex flex-col items-center justify-start z-10";
                     stTitle.innerText = "ESPERANDO FLUJO";
                     stDesc.innerText = "Canal en nivel cero (0 cm)";
                     stIcon.className = "p-3 bg-slate-500/20 border border-slate-500/40 rounded-xl text-slate-400";
                     stIcon.innerHTML = '<i data-lucide="droplets"></i>';
                 } else if (nivelM >= nivelCriticoM) {
-                    water.className = "absolute bottom-0 left-0 w-full bg-red-600/90 water-fill shadow-[0_-5px_25px_rgba(220,38,38,0.6)]";
+                    water.className = "absolute bottom-0 left-0 w-full bg-red-600/90 text-red-600/90 water-fill flex flex-col items-center justify-start z-10 shadow-[0_-5px_25px_rgba(220,38,38,0.6)]";
                     stTitle.innerText = "PELIGRO CRÍTICO";
                     stDesc.innerText = "Desbordamiento inminente en nodo";
                     stIcon.className = "p-3 bg-red-500/20 border border-red-500/40 rounded-xl text-red-400 animate-pulse";
                     stIcon.innerHTML = '<i data-lucide="alert-triangle"></i>';
                 } else if (nivelM >= nivelAlertaM) {
-                    water.className = "absolute bottom-0 left-0 w-full bg-yellow-500/90 water-fill shadow-[0_-5px_25px_rgba(234,179,8,0.4)]";
+                    water.className = "absolute bottom-0 left-0 w-full bg-yellow-500/90 text-yellow-500/90 water-fill flex flex-col items-center justify-start z-10 shadow-[0_-5px_25px_rgba(234,179,8,0.4)]";
                     stTitle.innerText = "ALERTA OPERATIVA";
                     stDesc.innerText = "Nivel en observación técnica";
                     stIcon.className = "p-3 bg-yellow-500/20 border border-yellow-500/40 rounded-xl text-yellow-400";
                     stIcon.innerHTML = '<i data-lucide="alert-circle"></i>';
                 } else {
-                    water.className = "absolute bottom-0 left-0 w-full bg-blue-500/80 water-fill shadow-[0_-5px_25px_rgba(59,130,246,0.3)]";
+                    water.className = "absolute bottom-0 left-0 w-full bg-blue-500/80 text-blue-500/80 water-fill flex flex-col items-center justify-start z-10 shadow-[0_-5px_25px_rgba(59,130,246,0.3)]";
                     stTitle.innerText = "ESTADO ESTABLE";
                     stDesc.innerText = "Condiciones de flujo normal";
                     stIcon.className = "p-3 bg-emerald-500/20 border border-emerald-500/40 rounded-xl text-emerald-400";
@@ -582,6 +716,7 @@
                 document.getElementById('currentLevel').innerText = "--";
                 document.getElementById('currentFlow').innerText = "--";
                 document.getElementById('waterLevel').style.height = "0%";
+                document.getElementById('waterPercent').innerText = "";
                 document.getElementById('connectionStatus').innerText = "ESPERANDO TELEMETRÍA";
                 document.getElementById('statusDot').className = "w-2 h-2 rounded-full bg-slate-500 animate-pulse";
                 lucide.createIcons();
@@ -591,16 +726,43 @@
                 const period = document.getElementById('histPeriod').value;
                 const metric = document.getElementById('histMetric').value;
                 let filtered = [...fullDataset];
-                let intervalMs = 15 * 60 * 1000;
+                let intervalMs = 60 * 1000; 
+
+                const isStd = unitSystem === 'standard';
+                const uNivel = isStd ? 'cm' : 'm';
+                const uCaudal = isStd ? 'm³/s' : 'L/s';
+                const fNivel = isStd ? 1 : 100;
+                const fCaudal = isStd ? 1 : 1000;
+                const decNivel = isStd ? 1 : 2;
+                const decCaudal = isStd ? 3 : 1;
 
                 if (period === 'today') {
                     filtered = fullDataset.filter(d => d.timestamp >= new Date().setHours(0,0,0,0));
+                    intervalMs = 60 * 1000; 
                 } else if (period === '7d') {
                     filtered = fullDataset.filter(d => d.timestamp >= Date.now() - (7 * 24 * 60 * 60 * 1000));
-                    intervalMs = 4 * 60 * 60 * 1000;
+                    intervalMs = 24 * 60 * 60 * 1000; 
                 } else if (period === '1m') {
                     filtered = fullDataset.filter(d => d.timestamp >= Date.now() - (30 * 24 * 60 * 60 * 1000));
-                    intervalMs = 24 * 60 * 60 * 1000;
+                    intervalMs = 24 * 60 * 60 * 1000; 
+                } else if (period === 'custom') {
+                    const dsStr = document.getElementById('dateStart').value;
+                    const deStr = document.getElementById('dateEnd').value;
+                    let ds = 0, de = 0;
+                    
+                    if(dsStr && deStr) {
+                        const [y1, m1, d1] = dsStr.split('-');
+                        const [y2, m2, d2] = deStr.split('-');
+                        ds = new Date(y1, m1 - 1, d1, 0, 0, 0, 0).getTime();
+                        de = new Date(y2, m2 - 1, d2, 23, 59, 59, 999).getTime();
+                    }
+                    
+                    filtered = fullDataset.filter(d => d.timestamp >= ds && d.timestamp <= de);
+                    if ((de - ds) <= 24 * 60 * 60 * 1000) {
+                        intervalMs = 60 * 1000; 
+                    } else {
+                        intervalMs = 24 * 60 * 60 * 1000; 
+                    }
                 }
 
                 const processAggregation = (dataToProcess) => {
@@ -618,14 +780,14 @@
 
                     if (dataToProcess.length > 0) {
                         const avgTotal = sumTotal / dataToProcess.length;
-                        document.getElementById('lblAvgNivel').innerText = `${avgTotal.toFixed(1)} cm`;
-                        document.getElementById('lblMaxPico').innerText = `${maxTotal.toFixed(1)} cm`;
+                        document.getElementById('lblAvgNivel').innerText = `${(avgTotal / fNivel).toFixed(decNivel)} ${uNivel}`;
+                        document.getElementById('lblMaxPico').innerText = `${(maxTotal / fNivel).toFixed(decNivel)} ${uNivel}`;
                         const flowTotal = 1.45 * anchoL * Math.pow(avgTotal / 100, 1.5);
-                        document.getElementById('lblAvgCaudal').innerText = `${isNaN(flowTotal) ? '0.000' : flowTotal.toFixed(3)} m³/s`;
+                        document.getElementById('lblAvgCaudal').innerText = `${isNaN(flowTotal) ? '0.000' : (flowTotal * fCaudal).toFixed(decCaudal)} ${uCaudal}`;
                     } else {
-                        document.getElementById('lblAvgNivel').innerText = `-- cm`;
-                        document.getElementById('lblMaxPico').innerText = `-- cm`;
-                        document.getElementById('lblAvgCaudal').innerText = `-- m³/s`;
+                        document.getElementById('lblAvgNivel').innerText = `-- ${uNivel}`;
+                        document.getElementById('lblMaxPico').innerText = `-- ${uNivel}`;
+                        document.getElementById('lblAvgCaudal').innerText = `-- ${uCaudal}`;
                     }
 
                     Object.values(groups).forEach(g => {
@@ -634,19 +796,73 @@
                         aggregated.push({ timestamp: g.timestamp, avg, max: Math.max(...g.levels), caudal: isNaN(q) ? 0 : q });
                     });
 
-                    advancedChart.data.labels = aggregated.map(d => new Date(d.timestamp).toLocaleDateString('es-ES', {day:'2-digit', month:'short'}));
-                    advancedChart.data.datasets[0].data = aggregated.map(d => (metric === 'nivel' ? d.avg.toFixed(1) : d.caudal.toFixed(3)));
-                    advancedChart.update();
+                    const labelsArray = aggregated.map(d => {
+                        const dateObj = new Date(d.timestamp);
+                        if (intervalMs < 24 * 60 * 60 * 1000) {
+                            return dateObj.toLocaleDateString('es-ES', {day:'2-digit', month:'short'}) + ' ' + dateObj.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'});
+                        }
+                        return dateObj.toLocaleDateString('es-ES', {day:'2-digit', month:'short'});
+                    });
+                    
+                    const dataArray = aggregated.map(d => (metric === 'nivel' ? (d.avg / fNivel).toFixed(decNivel) : (d.caudal * fCaudal).toFixed(decCaudal)));
 
-                    document.getElementById('tablaReportes').innerHTML = aggregated.slice(-15).reverse().map(d => `
+                    advancedChart.data.labels = labelsArray;
+                    advancedChart.data.datasets[0].data = dataArray;
+                    
+                    yAxisChart.data.labels = labelsArray;
+                    yAxisChart.data.datasets[0].data = dataArray;
+                    
+                    const pxPerPoint = (intervalMs < 24 * 60 * 60 * 1000) ? 15 : 40; 
+                    const minWidth = aggregated.length * pxPerPoint;
+                    const wrapper = document.getElementById('chartWrapper');
+                    
+                    let isAtEnd = true;
+                    if (wrapper) {
+                        isAtEnd = (wrapper.scrollLeft + wrapper.clientWidth) >= (wrapper.scrollWidth - 100);
+                    }
+
+                    document.getElementById('chartScrollArea').style.width = Math.max(wrapper ? wrapper.clientWidth : 0, minWidth) + 'px';
+                    
+                    advancedChart.update();
+                    yAxisChart.update(); 
+
+                    setTimeout(() => {
+                        if (wrapper && (isAtEnd || window.forceScrollToEnd)) {
+                            wrapper.scrollLeft = wrapper.scrollWidth;
+                            window.forceScrollToEnd = false;
+                        }
+                    }, 50);
+
+                    document.getElementById('tablaReportes').innerHTML = aggregated.reverse().map(d => {
+                        let timeStr = "";
+                        if (intervalMs < 24 * 60 * 60 * 1000) {
+                            timeStr = new Date(d.timestamp).toLocaleString('es-ES', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
+                        } else {
+                            timeStr = new Date(d.timestamp).toLocaleDateString('es-ES', {day:'2-digit', month:'long', year:'numeric'});
+                        }
+
+                        let badgeHTML = '';
+                        const limitCritCm = nivelCriticoM * 100;
+                        const limitAlertCm = nivelAlertaM * 100;
+
+                        if (d.max >= limitCritCm) {
+                            badgeHTML = `<span class="px-2.5 py-1 rounded-sm text-[9px] font-bold tracking-widest uppercase bg-red-500/20 text-red-400 border border-red-500/30">CRÍTICO</span>`;
+                        } else if (d.max >= limitAlertCm) {
+                            badgeHTML = `<span class="px-2.5 py-1 rounded-sm text-[9px] font-bold tracking-widest uppercase bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">ALERTA</span>`;
+                        } else {
+                            badgeHTML = `<span class="px-2.5 py-1 rounded-sm text-[9px] font-bold tracking-widest uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">ESTABLE</span>`;
+                        }
+                        
+                        return `
                         <tr class="hover:bg-slate-800/60 transition-colors cursor-pointer group" onclick="verDetalleDia(${d.timestamp})">
-                            <td class="px-6 py-4 font-mono text-slate-400">${new Date(d.timestamp).toLocaleString('es-ES', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'})}</td>
-                            <td class="px-6 py-4 text-center font-bold text-slate-300">${d.avg.toFixed(1)} cm</td>
-                            <td class="px-6 py-4 text-center font-black text-white">${d.max} cm</td>
-                            <td class="px-6 py-4 text-center font-mono font-bold text-cyan-400">${d.caudal.toFixed(3)}</td>
-                            <td class="px-6 py-4"><span class="px-2.5 py-1 rounded-sm text-[9px] font-bold tracking-widest uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">ESTABLE</span></td>
+                            <td class="px-6 py-4 font-mono text-slate-400">${timeStr}</td>
+                            <td class="px-6 py-4 text-center font-bold text-slate-300">${(d.avg / fNivel).toFixed(decNivel)} ${uNivel}</td>
+                            <td class="px-6 py-4 text-center font-black text-white">${(d.max / fNivel).toFixed(decNivel)} ${uNivel}</td>
+                            <td class="px-6 py-4 text-center font-mono font-bold text-cyan-400">${(d.caudal * fCaudal).toFixed(decCaudal)}</td>
+                            <td class="px-6 py-4">${badgeHTML}</td>
                             <td class="px-6 py-4 text-center"><span class="bg-blue-500/10 text-blue-400 px-3 py-1.5 rounded-lg border border-blue-500/30 text-[9px] font-bold uppercase tracking-wider group-hover:bg-blue-500 group-hover:text-white transition-all">Ver Día <i data-lucide="search" class="inline w-3 h-3 ml-1"></i></span></td>
-                        </tr>`).join('');
+                        </tr>`;
+                    }).join('');
                     lucide.createIcons();
                 };
                 processAggregation(filtered);
@@ -657,21 +873,75 @@
                 cargarConfiguracionNodo().then(sync);
             });
 
+            document.getElementById('btnApplyFilter').addEventListener('click', () => {
+                const btn = document.getElementById('btnApplyFilter');
+                const origHTML = btn.innerHTML;
+                const origClass = btn.className;
+                
+                btn.innerHTML = '<i data-lucide="check" class="w-3 h-3"></i> Filtro Activo';
+                btn.className = "bg-emerald-600/90 text-white px-4 py-1.5 rounded-lg text-[10px] font-bold shadow-[0_0_10px_rgba(16,185,129,0.4)] transition-all flex items-center gap-1";
+                lucide.createIcons();
+                
+                window.forceScrollToEnd = true; 
+                renderData();
+                
+                setTimeout(() => { 
+                    btn.innerHTML = origHTML; 
+                    btn.className = origClass; 
+                    lucide.createIcons(); 
+                }, 2000);
+            });
+
+            document.getElementById('histPeriod').addEventListener('change', (e) => {
+                if (e.target.value === 'custom') {
+                    document.getElementById('customDateRange').classList.remove('hidden');
+                } else {
+                    document.getElementById('customDateRange').classList.add('hidden');
+                    window.forceScrollToEnd = true; 
+                    renderData();
+                }
+            });
+
+            document.getElementById('histMetric').addEventListener('change', () => {
+                window.forceScrollToEnd = true;
+                renderData();
+            });
+
             document.getElementById('btnApply').addEventListener('click', async () => {
+                const btn = document.getElementById('btnApply');
+                const origHTML = btn.innerHTML;
+                const origClass = btn.className;
+                
+                btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> ENVIANDO...';
+                
                 const configJSON = JSON.stringify({
                     l: parseFloat(document.getElementById('inputAnchoL').value),
                     h: parseFloat(document.getElementById('inputSensorPos').value),
                     alerta: parseFloat(document.getElementById('inputAlerta').value),
                     critico: parseFloat(document.getElementById('inputCritico').value)
                 });
+                
                 try {
                     await fetch(`${FIREBASE_BASE}${nodoActivo}/calibracion.json?auth=${AUTH_TOKEN}`, { method: 'PUT', body: configJSON });
                     sync();
-                } catch (e) { console.error("Fallo SCADA: ", e); }
+                    
+                    btn.innerHTML = '<i data-lucide="check-circle" class="w-4 h-4"></i> CONFIGURACIÓN EXITOSA';
+                    btn.className = "bg-emerald-500 text-white font-bold py-3 px-8 rounded-xl uppercase text-[10px] tracking-[0.2em] shadow-[0_0_15px_rgba(16,185,129,0.5)] flex items-center gap-3 transition-all";
+                    lucide.createIcons();
+                } catch (e) { 
+                    console.error("Fallo SCADA: ", e); 
+                    btn.innerHTML = '<i data-lucide="x-circle" class="w-4 h-4"></i> ERROR DE RED';
+                    btn.className = "bg-red-500 text-white font-bold py-3 px-8 rounded-xl uppercase text-[10px] tracking-[0.2em] flex items-center gap-3 transition-all";
+                    lucide.createIcons();
+                }
+                
+                setTimeout(() => { 
+                    btn.innerHTML = origHTML; 
+                    btn.className = origClass; 
+                    lucide.createIcons(); 
+                }, 3000);
             });
 
-            document.getElementById('histPeriod').addEventListener('change', renderData);
-            document.getElementById('histMetric').addEventListener('change', renderData);
             cargarConfiguracionNodo().then(() => {
                 sync();
                 setInterval(sync, 15000); 
