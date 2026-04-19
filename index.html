@@ -346,6 +346,7 @@
                     </div>
                     
                     <div id="waterLevel" class="absolute bottom-0 left-0 w-full bg-slate-800 text-slate-800 water-fill flex flex-col items-center justify-start z-10" style="height: 0%;">
+                        
                         <div class="absolute top-0 left-0 w-[200%] h-1.5 -translate-y-[80%] flex wave-anim text-inherit opacity-50">
                             <svg class="w-1/2 h-full fill-current" preserveAspectRatio="none" viewBox="0 0 1200 120"><path d="M0,50 C150,150 350,-50 600,50 C850,150 1050,-50 1200,50 L1200,120 L0,120 Z"></path></svg>
                             <svg class="w-1/2 h-full fill-current -ml-[1px]" preserveAspectRatio="none" viewBox="0 0 1200 120"><path d="M0,50 C150,150 350,-50 600,50 C850,150 1050,-50 1200,50 L1200,120 L0,120 Z"></path></svg>
@@ -441,7 +442,6 @@
             let closestRow = null;
             let minDiff = Infinity;
             
-            // Buscar la fila con el tiempo más cercano
             rows.forEach(r => {
                 const rTs = parseInt(r.id.split('-')[1]);
                 const diff = Math.abs(rTs - ts);
@@ -452,9 +452,7 @@
             });
 
             if (closestRow) {
-                // Limpiar todas
                 rows.forEach(r => r.classList.remove('fila-iluminada'));
-                // Iluminar y hacer scroll hacia la elegida
                 closestRow.classList.add('fila-iluminada');
                 closestRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
@@ -467,7 +465,6 @@
             let minDiff = Infinity;
             let targetIndex = -1;
             
-            // Buscar el índice exacto o más cercano en el array dibujado
             window.currentChartData.forEach((d, i) => {
                 const diff = Math.abs(d.timestamp - ts);
                 if (diff < minDiff) { 
@@ -480,12 +477,10 @@
                 const chart = window.advancedChart;
                 const meta = chart.getDatasetMeta(0);
                 if (meta.data[targetIndex]) {
-                    // Encender Tooltip y Punto
                     chart.tooltip.setActiveElements([{datasetIndex: 0, index: targetIndex}], {x: meta.data[targetIndex].x, y: meta.data[targetIndex].y});
                     chart.setActiveElements([{datasetIndex: 0, index: targetIndex}]);
                     chart.update();
                     
-                    // Hacer Scroll Horizontal exacto hacia ese punto en el Canvas
                     const wrapper = document.getElementById('chartWrapper');
                     if(wrapper) {
                         const pointX = meta.data[targetIndex].x;
@@ -500,13 +495,11 @@
 
         // 3. Acción del Botón "Ver Lectura Exacta" de la Tabla
         window.verLecturaExacta = function(timestamp) {
-            // Inmediatamente resaltamos la tabla
             window.highlightTableRow(timestamp);
 
             const currentPeriod = document.getElementById('histPeriod').value;
             const btnFilter = document.getElementById('btnApplyFilter');
 
-            // Si estamos viendo todo el mes (zoom out), forzamos el zoom al día
             if (currentPeriod !== 'custom' && currentPeriod !== 'today') {
                 const fecha = new Date(timestamp);
                 const dateStr = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}-${String(fecha.getDate()).padStart(2, '0')}`;
@@ -516,14 +509,12 @@
                 document.getElementById('dateStart').value = dateStr;
                 document.getElementById('dateEnd').value = dateStr;
                 
-                window.highlightTimestamp = timestamp; // Memorizamos para aplicarlo post-render
+                window.highlightTimestamp = timestamp;
                 btnFilter.click();
             } else {
-                // Si ya estamos con zoom (hoy o custom), solo buscamos el punto en la gráfica
                 window.highlightChartPoint(timestamp);
             }
             
-            // Scroll hacia la sección de la gráfica
             document.getElementById('seccionGrafica').scrollIntoView({ behavior: 'smooth', block: 'start' });
         };
 
@@ -575,7 +566,7 @@
                         y: { 
                             position: 'right', 
                             min: 0, 
-                            grace: '25%', // TECHO DE CRISTAL
+                            grace: '25%', 
                             grid: { display: false, drawBorder: false }, 
                             ticks: { 
                                 font: { size: 10, weight: 'bold' }, 
@@ -642,7 +633,7 @@
                         y: { 
                             position: 'right', 
                             min: 0, 
-                            grace: '25%', // TECHO DE CRISTAL
+                            grace: '25%',
                             grid: { color: 'rgba(51, 65, 85, 0.4)', drawBorder: false }, 
                             ticks: { display: false } 
                         } 
@@ -811,9 +802,6 @@
                 let porcentajeLlenado = (nivelM / sensorPosM) * 100;
                 porcentajeLlenado = Math.min(100, Math.max(0, porcentajeLlenado)); 
                 
-                // PARCHE: Compensación matemática de la cresta del oleaje
-                // Restamos ~1.5% visual para que la punta más alta de la ola 
-                // coincida con el cálculo real y nunca invada los umbrales de forma errónea
                 let porcentajeVisual = porcentajeLlenado > 0 ? Math.max(0, porcentajeLlenado - 1.5) : 0;
                 water.style.height = `${porcentajeVisual}%`;
                 
@@ -988,7 +976,11 @@
                         }
                     }, 50);
 
-                    document.getElementById('tablaReportes').innerHTML = aggregated.reverse().map(d => {
+                    // =================================================================================
+                    // PARCHE DE SINCRONIZACIÓN (LA MAGIA ESTÁ AQUÍ): [...aggregated].reverse()
+                    // Usamos una copia virtual en lugar de voltear la matriz original de la gráfica
+                    // =================================================================================
+                    document.getElementById('tablaReportes').innerHTML = [...aggregated].reverse().map(d => {
                         let timeStr = "";
                         if (intervalMs < 24 * 60 * 60 * 1000) {
                             timeStr = new Date(d.timestamp).toLocaleString('es-ES', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
