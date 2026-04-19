@@ -346,13 +346,12 @@
                     </div>
                     
                     <div id="waterLevel" class="absolute bottom-0 left-0 w-full bg-slate-800 text-slate-800 water-fill flex flex-col items-center justify-start z-10" style="height: 0%;">
-                        
-                        <div class="absolute top-0 left-0 w-[200%] h-3 -translate-y-full flex wave-anim text-inherit opacity-50">
+                        <div class="absolute top-0 left-0 w-[200%] h-1.5 -translate-y-[80%] flex wave-anim text-inherit opacity-50">
                             <svg class="w-1/2 h-full fill-current" preserveAspectRatio="none" viewBox="0 0 1200 120"><path d="M0,50 C150,150 350,-50 600,50 C850,150 1050,-50 1200,50 L1200,120 L0,120 Z"></path></svg>
                             <svg class="w-1/2 h-full fill-current -ml-[1px]" preserveAspectRatio="none" viewBox="0 0 1200 120"><path d="M0,50 C150,150 350,-50 600,50 C850,150 1050,-50 1200,50 L1200,120 L0,120 Z"></path></svg>
                         </div>
                         
-                        <div class="absolute top-0 left-0 w-[200%] h-4 -translate-y-[95%] flex wave-anim-fast text-inherit">
+                        <div class="absolute top-0 left-0 w-[200%] h-2 -translate-y-[90%] flex wave-anim-fast text-inherit">
                             <svg class="w-1/2 h-full fill-current" preserveAspectRatio="none" viewBox="0 0 1200 120"><path d="M0,50 C150,150 350,-50 600,50 C850,150 1050,-50 1200,50 L1200,120 L0,120 Z"></path></svg>
                             <svg class="w-1/2 h-full fill-current -ml-[1px]" preserveAspectRatio="none" viewBox="0 0 1200 120"><path d="M0,50 C150,150 350,-50 600,50 C850,150 1050,-50 1200,50 L1200,120 L0,120 Z"></path></svg>
                         </div>
@@ -597,7 +596,6 @@
                     responsive: true, maintainAspectRatio: false,
                     layout: { padding: { top: 30, bottom: 0, left: 10, right: 0 } },
                     
-                    // NUEVO: Al hacer clic en la gráfica, iluminamos la tabla
                     onClick: (e, elements) => {
                         if (elements && elements.length > 0) {
                             const dataIndex = elements[0].index;
@@ -812,7 +810,12 @@
                 
                 let porcentajeLlenado = (nivelM / sensorPosM) * 100;
                 porcentajeLlenado = Math.min(100, Math.max(0, porcentajeLlenado)); 
-                water.style.height = `${porcentajeLlenado}%`;
+                
+                // PARCHE: Compensación matemática de la cresta del oleaje
+                // Restamos ~1.5% visual para que la punta más alta de la ola 
+                // coincida con el cálculo real y nunca invada los umbrales de forma errónea
+                let porcentajeVisual = porcentajeLlenado > 0 ? Math.max(0, porcentajeLlenado - 1.5) : 0;
+                water.style.height = `${porcentajeVisual}%`;
                 
                 document.getElementById('waterPercent').innerText = porcentajeLlenado.toFixed(1) + '%';
                 
@@ -941,7 +944,6 @@
                         aggregated.push({ timestamp: g.timestamp, avg, max: Math.max(...g.levels), caudal: isNaN(q) ? 0 : q });
                     });
 
-                    // Guardamos la memoria para que el tooltip sepa qué leer
                     window.currentChartData = aggregated;
 
                     const labelsArray = aggregated.map(d => {
@@ -980,14 +982,12 @@
                             window.forceScrollToEnd = false;
                         }
 
-                        // Lógica del Francotirador (Highlight Exact Data Point Post-Render)
                         if (window.highlightTimestamp) {
                             window.highlightChartPoint(window.highlightTimestamp);
-                            window.highlightTimestamp = null; // Limpiar memoria
+                            window.highlightTimestamp = null; 
                         }
                     }, 50);
 
-                    // AL GENERAR LA TABLA, INYECTAMOS UN ID ÚNICO BASADO EN EL TIMESTAMP (row-168123...)
                     document.getElementById('tablaReportes').innerHTML = aggregated.reverse().map(d => {
                         let timeStr = "";
                         if (intervalMs < 24 * 60 * 60 * 1000) {
