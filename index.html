@@ -275,7 +275,7 @@
                     <thead class="bg-slate-900/90 backdrop-blur-sm text-slate-500 font-bold uppercase text-[9px] tracking-widest border-b border-slate-800 sticky top-0 z-10">
                         <tr>
                             <th class="px-6 py-4">Fecha / Hora</th>
-                            <th class="px-6 py-4 text-center" id="thNivel">Nivel Prom. (cm)</th>
+                            <th class="px-6 py-4 text-center" id="thNivel">Nivel Cierre (cm)</th>
                             <th class="px-6 py-4 text-center" id="thPico">Pico Máx. (cm)</th>
                             <th class="px-6 py-4 text-center" id="thCaudal">Caudal Est. (m³/s)</th>
                             <th class="px-6 py-4">Estado Alerta</th>
@@ -546,7 +546,7 @@
                 const isStd = unitSystem === 'standard';
                 document.getElementById('unitLblNivel').innerText = isStd ? 'cm' : 'm';
                 document.getElementById('unitLblCaudal').innerText = isStd ? 'm³/s' : 'L/s';
-                document.getElementById('thNivel').innerText = `Nivel Prom. (${isStd ? 'cm' : 'm'})`;
+                document.getElementById('thNivel').innerText = `Nivel Cierre (${isStd ? 'cm' : 'm'})`;
                 document.getElementById('thPico').innerText = `Pico Máx. (${isStd ? 'cm' : 'm'})`;
                 document.getElementById('thCaudal').innerText = `Caudal Est. (${isStd ? 'm³/s' : 'L/s'})`;
                 document.getElementById('optMetNivel').innerText = `Niveles (${isStd ? 'cm' : 'm'})`;
@@ -592,8 +592,8 @@
                                     if (!window.currentChartData) return '';
                                     const dataPoint = window.currentChartData[context.dataIndex];
                                     if (!dataPoint) return '';
-                                    if (dataPoint.max >= nivelCriticoM * 100) return ' ESTADO: PELIGRO CRÍTICO 🔴';
-                                    if (dataPoint.max >= nivelAlertaM * 100) return ' ESTADO: ALERTA PREVENTIVA 🟡';
+                                    if (dataPoint.last >= nivelCriticoM * 100) return ' ESTADO: PELIGRO CRÍTICO 🔴';
+                                    if (dataPoint.last >= nivelAlertaM * 100) return ' ESTADO: ALERTA PREVENTIVA 🟡';
                                     return ' ESTADO: ESTABLE 🟢';
                                 }
                             }
@@ -645,9 +645,6 @@
                 updateOfflineUI("CARGANDO NODO", "Sincronizando con satélite...");
             }
 
-            // ==============================================================
-            // 🛑 MOTOR DE SINCRONIZACIÓN MENSAL (PARTICIONADO)
-            // ==============================================================
             window.sync = async function() {
                 anchoL = parseFloat(document.getElementById('inputAnchoL').value) || 1.0;
                 sensorPosM = parseFloat(document.getElementById('inputSensorPos').value) || 1.80;
@@ -668,16 +665,13 @@
                     }
                 } catch (e) {}
 
-                // --- LOGICA DE CARGA DE CARPETAS MENSUALES ---
                 try {
                     const period = document.getElementById('histPeriod').value;
                     let monthsToFetch = [];
                     const now = new Date();
 
                     if (period === 'today' || period === '1m' || period === '7d') {
-                        // Tráeme el mes actual
                         monthsToFetch.push(`${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}`);
-                        // Si estamos a inicio de mes, tráeme también el anterior para completar "7 días" o "1 mes"
                         if (period !== 'today') {
                             const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
                             monthsToFetch.push(`${prev.getFullYear()}/${String(prev.getMonth() + 1).padStart(2, '0')}`);
@@ -692,7 +686,6 @@
                         }
                     }
 
-                    // Peticiones paralelas para no ralentizar el NOC
                     const fetchPromises = monthsToFetch.map(m => 
                         fetch(`${FIREBASE_BASE}${nodoActivo}/historial/${m}.json?auth=${AUTH_TOKEN}&nocache=${Date.now()}`)
                         .then(r => r.json())
@@ -781,26 +774,34 @@
                 const stIcon = document.getElementById('statusIcon');
                 const stDesc = document.getElementById('statusDesc');
 
+                const lvlEl = document.getElementById('currentLevel');
+                const flowEl = document.getElementById('currentFlow');
+                flowEl.className = "text-5xl font-black text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.6)] transition-all duration-500";
+
                 if (valNivel <= 0) {
                     water.className = "absolute bottom-0 left-0 w-full bg-slate-800/80 text-slate-800/80 water-fill flex flex-col items-center justify-start z-10";
                     stTitle.innerText = "ESPERANDO FLUJO"; stDesc.innerText = "Canal en nivel cero (0 cm)";
                     stIcon.className = "p-3 bg-slate-500/20 border border-slate-500/40 rounded-xl text-slate-400";
                     stIcon.innerHTML = '<i data-lucide="droplets"></i>';
+                    lvlEl.className = "text-5xl font-black text-slate-500 drop-shadow-[0_0_15px_rgba(100,116,139,0.5)] transition-all duration-500";
                 } else if (nivelM >= nivelCriticoM) {
                     water.className = "absolute bottom-0 left-0 w-full bg-red-600/90 text-red-600/90 water-fill flex flex-col items-center justify-start z-10 shadow-[0_-5px_25px_rgba(220,38,38,0.6)]";
                     stTitle.innerText = "PELIGRO CRÍTICO"; stDesc.innerText = "Desbordamiento inminente en nodo";
                     stIcon.className = "p-3 bg-red-500/20 border border-red-500/40 rounded-xl text-red-400 animate-pulse";
                     stIcon.innerHTML = '<i data-lucide="alert-triangle"></i>';
+                    lvlEl.className = "text-5xl font-black text-red-500 drop-shadow-[0_0_15px_rgba(239,68,68,0.8)] transition-all duration-500";
                 } else if (nivelM >= nivelAlertaM) {
                     water.className = "absolute bottom-0 left-0 w-full bg-yellow-500/90 text-yellow-500/90 water-fill flex flex-col items-center justify-start z-10 shadow-[0_-5px_25px_rgba(234,179,8,0.4)]";
                     stTitle.innerText = "ALERTA OPERATIVA"; stDesc.innerText = "Nivel en observación técnica";
                     stIcon.className = "p-3 bg-yellow-500/20 border border-yellow-500/40 rounded-xl text-yellow-400";
                     stIcon.innerHTML = '<i data-lucide="alert-circle"></i>';
+                    lvlEl.className = "text-5xl font-black text-yellow-400 drop-shadow-[0_0_15px_rgba(250,204,21,0.8)] transition-all duration-500";
                 } else {
                     water.className = "absolute bottom-0 left-0 w-full bg-blue-500/80 text-blue-500/80 water-fill flex flex-col items-center justify-start z-10 shadow-[0_-5px_25px_rgba(59,130,246,0.3)]";
                     stTitle.innerText = "ESTADO ESTABLE"; stDesc.innerText = "Condiciones de flujo normal";
                     stIcon.className = "p-3 bg-emerald-500/20 border border-emerald-500/40 rounded-xl text-emerald-400";
                     stIcon.innerHTML = '<i data-lucide="check-circle"></i>';
+                    lvlEl.className = "text-5xl font-black text-blue-500 drop-shadow-[0_0_15px_rgba(59,130,246,0.8)] transition-all duration-500";
                 }
                 lucide.createIcons();
             }
@@ -814,6 +815,8 @@
                 document.getElementById('waterLevel').style.height = "0%";
                 document.getElementById('connectionStatus').innerText = "ESPERANDO TELEMETRÍA";
                 document.getElementById('statusDot').className = "w-2.5 h-2.5 rounded-full bg-slate-500 animate-pulse";
+                document.getElementById('currentLevel').className = "text-5xl font-black text-slate-700 transition-colors duration-500 drop-shadow-lg";
+                document.getElementById('currentFlow').className = "text-5xl font-black text-slate-700 transition-colors duration-500 drop-shadow-lg";
                 lucide.createIcons();
             }
 
@@ -830,15 +833,16 @@
                 const decNivel = isStd ? 1 : 2;
                 const decCaudal = isStd ? 3 : 1;
 
+                // LA MAGIA ESTÁ AQUÍ: Ajustamos los intervalos de compresión
                 if (period === 'today') {
                     filtered = fullDataset.filter(d => d.timestamp >= new Date().setHours(0,0,0,0));
-                    intervalMs = 60 * 1000; 
+                    intervalMs = 1; // 0 COMPRESIÓN: Muestra la lectura exacta al segundo
                 } else if (period === '7d') {
                     filtered = fullDataset.filter(d => d.timestamp >= Date.now() - (7 * 24 * 60 * 60 * 1000));
-                    intervalMs = 24 * 60 * 60 * 1000; 
+                    intervalMs = 60 * 1000 * 15; // Agrupa cada 15 min en vista semanal
                 } else if (period === '1m') {
                     filtered = fullDataset.filter(d => d.timestamp >= Date.now() - (30 * 24 * 60 * 60 * 1000));
-                    intervalMs = 24 * 60 * 60 * 1000; 
+                    intervalMs = 60 * 1000 * 60; // Agrupa cada 1 hora en vista mensual
                 } else if (period === 'custom') {
                     const dsStr = document.getElementById('dateStart').value;
                     const deStr = document.getElementById('dateEnd').value;
@@ -846,7 +850,7 @@
                         const ds = new Date(dsStr).getTime();
                         const de = new Date(deStr).setHours(23,59,59,999);
                         filtered = fullDataset.filter(d => d.timestamp >= ds && d.timestamp <= de);
-                        intervalMs = (de - ds <= 86400000) ? 60000 : 86400000;
+                        intervalMs = (de - ds <= 86400000) ? 1 : 3600000;
                     }
                 }
 
@@ -861,8 +865,10 @@
 
                 const aggregated = Object.values(groups).map(g => {
                     const avg = g.levels.reduce((a,b) => a+b, 0) / g.levels.length;
-                    const q = 1.45 * anchoL * Math.pow(avg/100, 1.5);
-                    return { timestamp: g.timestamp, avg, max: Math.max(...g.levels), caudal: isNaN(q) ? 0 : q };
+                    const last = g.levels[g.levels.length - 1]; 
+                    const max = Math.max(...g.levels); 
+                    const q = 1.45 * anchoL * Math.pow(last/100, 1.5); 
+                    return { timestamp: g.timestamp, avg, last, max, caudal: isNaN(q) ? 0 : q };
                 });
 
                 if (filtered.length > 0) {
@@ -875,9 +881,14 @@
 
                 const labelsArray = aggregated.map(d => {
                     const dateObj = new Date(d.timestamp);
+                    // Mostrar segundos si estamos viendo los datos crudos
+                    if (intervalMs === 1) {
+                        return dateObj.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+                    }
                     return intervalMs < 86400000 ? dateObj.toLocaleDateString('es-ES', {day:'2-digit', month:'short'}) + ' ' + dateObj.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'}) : dateObj.toLocaleDateString('es-ES', {day:'2-digit', month:'short'});
                 });
-                const dataArray = aggregated.map(d => (metric === 'nivel' ? (d.avg / fNivel).toFixed(decNivel) : (d.caudal * fCaudal).toFixed(decCaudal)));
+                
+                const dataArray = aggregated.map(d => (metric === 'nivel' ? (d.last / fNivel).toFixed(decNivel) : (d.caudal * fCaudal).toFixed(decCaudal)));
 
                 if (dataArray.length > 0) {
                     const numericData = dataArray.map(Number);
@@ -899,8 +910,17 @@
                 document.getElementById('tablaReportes').innerHTML = [...aggregated].reverse().map(d => {
                     const limitCritCm = nivelCriticoM * 100;
                     const limitAlertCm = nivelAlertaM * 100;
-                    let badge = d.max >= limitCritCm ? '<span class="px-2.5 py-1 rounded-sm text-[9px] font-bold tracking-widest uppercase bg-red-500/20 text-red-400 border border-red-500/30">CRÍTICO</span>' : (d.max >= limitAlertCm ? '<span class="px-2.5 py-1 rounded-sm text-[9px] font-bold tracking-widest uppercase bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">ALERTA</span>' : '<span class="px-2.5 py-1 rounded-sm text-[9px] font-bold tracking-widest uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">ESTABLE</span>');
-                    return `<tr id="row-${d.timestamp}" class="hover:bg-slate-800/60 transition-colors cursor-pointer group" onclick="verLecturaExacta(${d.timestamp})"><td class="px-6 py-4 font-mono text-slate-400">${new Date(d.timestamp).toLocaleString('es-ES')}</td><td class="px-6 py-4 text-center font-bold text-slate-300">${(d.avg / fNivel).toFixed(decNivel)} ${uNivel}</td><td class="px-6 py-4 text-center font-black text-white">${(d.max / fNivel).toFixed(decNivel)} ${uNivel}</td><td class="px-6 py-4 text-center font-mono font-bold text-cyan-400">${(d.caudal * fCaudal).toFixed(decCaudal)}</td><td class="px-6 py-4">${badge}</td><td class="px-6 py-4 text-center"><span class="bg-blue-500/10 text-blue-400 px-3 py-1.5 rounded-lg border border-blue-500/30 text-[9px] font-bold uppercase tracking-wider group-hover:bg-blue-500 group-hover:text-white transition-all">Ver Lectura <i data-lucide="crosshair" class="inline w-3 h-3 ml-1"></i></span></td></tr>`;
+                    
+                    let badge = d.last >= limitCritCm ? '<span class="px-2.5 py-1 rounded-sm text-[9px] font-bold tracking-widest uppercase bg-red-500/20 text-red-400 border border-red-500/30">CRÍTICO</span>' : (d.last >= limitAlertCm ? '<span class="px-2.5 py-1 rounded-sm text-[9px] font-bold tracking-widest uppercase bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">ALERTA</span>' : '<span class="px-2.5 py-1 rounded-sm text-[9px] font-bold tracking-widest uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">ESTABLE</span>');
+                    
+                    return `<tr id="row-${d.timestamp}" class="hover:bg-slate-800/60 transition-colors cursor-pointer group" onclick="verLecturaExacta(${d.timestamp})">
+                        <td class="px-6 py-4 font-mono text-slate-400">${new Date(d.timestamp).toLocaleString('es-ES')}</td>
+                        <td class="px-6 py-4 text-center font-bold text-slate-300">${(d.last / fNivel).toFixed(decNivel)} ${uNivel}</td>
+                        <td class="px-6 py-4 text-center font-black text-white">${(d.max / fNivel).toFixed(decNivel)} ${uNivel}</td>
+                        <td class="px-6 py-4 text-center font-mono font-bold text-cyan-400">${(d.caudal * fCaudal).toFixed(decCaudal)}</td>
+                        <td class="px-6 py-4">${badge}</td>
+                        <td class="px-6 py-4 text-center"><span class="bg-blue-500/10 text-blue-400 px-3 py-1.5 rounded-lg border border-blue-500/30 text-[9px] font-bold uppercase tracking-wider group-hover:bg-blue-500 group-hover:text-white transition-all">Ver Lectura <i data-lucide="crosshair" class="inline w-3 h-3 ml-1"></i></span></td>
+                    </tr>`;
                 }).join('');
                 lucide.createIcons();
             }
@@ -912,14 +932,35 @@
             document.getElementById('btnApply').addEventListener('click', async () => {
                 const btn = document.getElementById('btnApply');
                 const origHTML = btn.innerHTML;
+                const origClass = btn.className;
                 btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> ENVIANDO...';
+                
+                const configJSON = JSON.stringify({
+                    l: parseFloat(document.getElementById('inputAnchoL').value), 
+                    h: parseFloat(document.getElementById('inputSensorPos').value), 
+                    alerta: parseFloat(document.getElementById('inputAlerta').value), 
+                    critico: parseFloat(document.getElementById('inputCritico').value)
+                });
+                
                 try {
-                    await fetch(`${FIREBASE_BASE}${nodoActivo}/calibracion.json?auth=${AUTH_TOKEN}`, { method: 'PUT', body: JSON.stringify({l: parseFloat(document.getElementById('inputAnchoL').value), h: parseFloat(document.getElementById('inputSensorPos').value), alerta: parseFloat(document.getElementById('inputAlerta').value), critico: parseFloat(document.getElementById('inputCritico').value)}) });
-                    window.sync();
+                    await fetch(`${FIREBASE_BASE}${nodoActivo}/calibracion.json?auth=${AUTH_TOKEN}`, { method: 'PUT', body: configJSON });
+                    sync();
+                    
                     btn.innerHTML = '<i data-lucide="check-circle" class="w-4 h-4"></i> CONFIGURACIÓN EXITOSA';
                     btn.className = "bg-emerald-500 text-white font-bold py-3 px-8 rounded-xl uppercase text-[10px] tracking-[0.2em] shadow-[0_0_15px_rgba(16,185,129,0.5)] flex items-center gap-3 transition-all";
-                } catch (e) { btn.className = "bg-red-500 text-white font-bold py-3 px-8 rounded-xl uppercase text-[10px] tracking-[0.2em] flex items-center gap-3 transition-all"; btn.innerHTML = '<i data-lucide="x-circle" class="w-4 h-4"></i> ERROR DE RED'; }
-                setTimeout(() => { btn.innerHTML = origHTML; btn.className = "bg-blue-600/90 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-xl uppercase text-[10px] tracking-[0.2em] transition-all shadow-[0_0_15px_rgba(37,99,235,0.4)] active:scale-95 flex items-center gap-3 border border-blue-400/50"; lucide.createIcons(); }, 3000);
+                    lucide.createIcons();
+                } catch (e) { 
+                    console.error("Fallo SCADA: ", e); 
+                    btn.innerHTML = '<i data-lucide="x-circle" class="w-4 h-4"></i> ERROR DE RED';
+                    btn.className = "bg-red-500 text-white font-bold py-3 px-8 rounded-xl uppercase text-[10px] tracking-[0.2em] flex items-center gap-3 transition-all";
+                    lucide.createIcons();
+                }
+                
+                setTimeout(() => { 
+                    btn.innerHTML = origHTML; 
+                    btn.className = origClass; 
+                    lucide.createIcons(); 
+                }, 3000);
             });
 
             cargarConfiguracionNodo().then(() => { window.sync(); setInterval(window.sync, 15000); });
