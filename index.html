@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HydroSentinel - Centro de Control NOC v4.0</title>
+    <title>HydroSentinel - Centro de Control NOC v5.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -59,7 +59,7 @@
                 <div class="p-2 bg-blue-500/10 rounded-lg border border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.2)]">
                     <i data-lucide="shield-check" class="w-6 h-6 text-blue-400"></i>
                 </div>
-                <h1 class="text-xl md:text-2xl font-black tracking-wider truncate text-slate-100">HydroSentinel <span class="hidden lg:inline text-blue-500 text-xs font-bold ml-2 uppercase tracking-widest px-2 py-1 bg-blue-500/10 rounded border border-blue-500/20">v4.0 Flota Global</span></h1>
+                <h1 class="text-xl md:text-2xl font-black tracking-wider truncate text-slate-100">HydroSentinel <span class="hidden lg:inline text-blue-500 text-xs font-bold ml-2 uppercase tracking-widest px-2 py-1 bg-blue-500/10 rounded border border-blue-500/20">v5.0 Nexus Global</span></h1>
             </div>
             
             <div class="flex items-center gap-3 w-full md:w-auto">
@@ -209,6 +209,7 @@
                 <div class="flex flex-wrap items-center gap-3 bg-slate-900/80 p-2 rounded-xl border border-slate-800 shadow-inner">
                     <select id="histPeriod" class="bg-slate-950 border border-slate-700 text-slate-300 text-[10px] font-bold rounded-lg px-3 py-2 cursor-pointer outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors">
                         <option value="today">Hoy (Lecturas al Minuto)</option>
+                        <option value="specific_day">Día Específico 📅</option>
                         <option value="7d">Últimos 7 Días</option>
                         <option value="1m" selected>Último Mes (30 Días)</option>
                         <option value="custom">Rango Personalizado 📅</option>
@@ -216,7 +217,7 @@
 
                     <div id="customDateRange" class="hidden flex items-center gap-2 border-l border-slate-700 pl-3">
                         <input type="date" id="dateStart" class="bg-slate-950 border border-slate-700 text-slate-300 text-[10px] font-bold rounded-lg px-2 py-1.5 outline-none focus:border-blue-500 [color-scheme:dark]">
-                        <span class="text-slate-500 text-[10px] font-bold">al</span>
+                        <span id="lblAl" class="text-slate-500 text-[10px] font-bold">al</span>
                         <input type="date" id="dateEnd" class="bg-slate-950 border border-slate-700 text-slate-300 text-[10px] font-bold rounded-lg px-2 py-1.5 outline-none focus:border-blue-500 [color-scheme:dark]">
                         <button id="btnApplyFilter" class="bg-blue-600/80 text-white px-4 py-1.5 rounded-lg text-[10px] font-bold hover:bg-blue-500 border border-blue-500/50 shadow-[0_0_10px_rgba(37,99,235,0.2)] transition-all">Aplicar</button>
                     </div>
@@ -516,21 +517,24 @@
             window.highlightTableRow(timestamp);
             const currentPeriod = document.getElementById('histPeriod').value;
             const btnFilter = document.getElementById('btnApplyFilter');
-            if (currentPeriod !== 'custom' && currentPeriod !== 'today') {
+            
+            // Si el período actual NO es specific_day y NO es today (aplica para custom, 1m, 7d), saltamos
+            if (currentPeriod !== 'specific_day' && currentPeriod !== 'today') {
                 const fecha = new Date(timestamp);
-                // AJUSTE 1: Formato local para evitar el desfase de 5 horas UTC
                 const dateStr = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}-${String(fecha.getDate()).padStart(2, '0')}`;
-                document.getElementById('histPeriod').value = "custom";
-                document.getElementById('customDateRange').classList.remove('hidden');
-                document.getElementById('dateStart').value = dateStr;
-                document.getElementById('dateEnd').value = dateStr;
                 
+                // Forzar UI al nuevo filtro "Día Específico"
+                const histPeriod = document.getElementById('histPeriod');
+                histPeriod.value = "specific_day";
+                histPeriod.dispatchEvent(new Event('change')); // Dispara evento para ocultar fecha 'fin'
+                
+                document.getElementById('dateStart').value = dateStr;
                 btnFilter.click();
 
-                // AJUSTE 2: Retardo táctico para asegurar que la gráfica se dibuje ANTES de hacer scroll
+                // Damos un margen de tiempo ligeramente mayor para permitir que la animación se procese
                 setTimeout(() => {
                     window.highlightChartPoint(timestamp);
-                }, 100);
+                }, 300);
             } else {
                 window.highlightChartPoint(timestamp);
             }
@@ -612,7 +616,7 @@
                     onClick: (e, elements) => {
                         if (elements && elements.length > 0) {
                             const dataIndex = elements[0].index;
-                            if (window.currentChartData && window.currentChartData[dataIndex]) window.highlightTableRow(window.currentChartData[dataIndex].timestamp);
+                            if (window.currentChartData && window.currentChartData[dataIndex]) window.verLecturaExacta(window.currentChartData[dataIndex].timestamp);
                         }
                     },
                     plugins: { 
@@ -719,10 +723,13 @@
                             const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
                             monthsToFetch.push(`${prev.getFullYear()}/${String(prev.getMonth() + 1).padStart(2, '0')}`);
                         }
-                    } else if (period === 'custom') {
-                        // AJUSTE FECHAS: Interpreta correctamente la zona local
+                    } else if (period === 'custom' || period === 'specific_day') {
                         const dsParts = document.getElementById('dateStart').value.split('-');
-                        const deParts = document.getElementById('dateEnd').value.split('-');
+                        let deParts = document.getElementById('dateEnd').value.split('-');
+
+                        if (period === 'specific_day') {
+                            deParts = dsParts;
+                        }
                         
                         let ds = new Date(dsParts[0], dsParts[1] - 1, dsParts[2]);
                         let de = new Date(deParts[0], deParts[1] - 1, deParts[2]);
@@ -890,10 +897,14 @@
                 } else if (period === '1m') {
                     filtered = fullDataset.filter(d => d.timestamp >= Date.now() - (30 * 24 * 60 * 60 * 1000));
                     intervalMs = 60 * 1000 * 60; 
-                } else if (period === 'custom') {
+                } else if (period === 'custom' || period === 'specific_day') {
                     // AJUSTE DE ZONA HORARIA LOCAL EN FILTRO PERSONALIZADO
                     const dsParts = document.getElementById('dateStart').value.split('-');
-                    const deParts = document.getElementById('dateEnd').value.split('-');
+                    let deParts = document.getElementById('dateEnd').value.split('-');
+
+                    if (period === 'specific_day') {
+                        deParts = dsParts;
+                    }
                     
                     if(dsParts.length === 3 && deParts.length === 3) {
                         const ds = new Date(dsParts[0], dsParts[1] - 1, dsParts[2]).getTime();
@@ -975,8 +986,50 @@
             }
 
             document.getElementById('nodoSelector').addEventListener('change', (e) => { nodoActivo = e.target.value; cargarConfiguracionNodo().then(window.sync); });
-            document.getElementById('btnApplyFilter').addEventListener('click', () => { window.forceScrollToEnd = true; renderData(); });
-            document.getElementById('histPeriod').addEventListener('change', (e) => { if (e.target.value === 'custom') document.getElementById('customDateRange').classList.remove('hidden'); else { document.getElementById('customDateRange').classList.add('hidden'); window.forceScrollToEnd = true; window.sync(); } });
+            
+            document.getElementById('btnApplyFilter').addEventListener('click', () => { 
+                const btn = document.getElementById('btnApplyFilter');
+                const origText = btn.innerHTML;
+                const origClass = btn.className;
+                
+                btn.innerHTML = '<i data-lucide="loader-2" class="w-3 h-3 inline animate-spin mr-1"></i>...';
+                if(window.lucide) window.lucide.createIcons();
+                
+                setTimeout(() => {
+                    window.forceScrollToEnd = true; 
+                    renderData(); 
+                    
+                    btn.innerHTML = '<i data-lucide="check" class="w-3 h-3 inline mr-1"></i>Aplicado';
+                    btn.className = "bg-emerald-500/90 text-white px-4 py-1.5 rounded-lg text-[10px] font-bold hover:bg-emerald-400 border border-emerald-500/50 shadow-[0_0_10px_rgba(16,185,129,0.3)] transition-all";
+                    if(window.lucide) window.lucide.createIcons();
+                    
+                    setTimeout(() => {
+                        btn.innerHTML = origText;
+                        btn.className = origClass;
+                    }, 1500);
+                }, 50);
+            });
+
+            document.getElementById('histPeriod').addEventListener('change', (e) => { 
+                const customDateRange = document.getElementById('customDateRange');
+                const dateEnd = document.getElementById('dateEnd');
+                const lblAl = document.getElementById('lblAl');
+
+                if (e.target.value === 'custom') { 
+                    customDateRange.classList.remove('hidden'); 
+                    dateEnd.classList.remove('hidden');
+                    lblAl.classList.remove('hidden');
+                } else if (e.target.value === 'specific_day') {
+                    customDateRange.classList.remove('hidden'); 
+                    dateEnd.classList.add('hidden');
+                    lblAl.classList.add('hidden');
+                } else { 
+                    customDateRange.classList.add('hidden'); 
+                    window.forceScrollToEnd = true; 
+                    window.sync(); 
+                } 
+            });
+
             document.getElementById('histMetric').addEventListener('change', renderData);
             document.getElementById('btnApply').addEventListener('click', async () => {
                 const btn = document.getElementById('btnApply');
