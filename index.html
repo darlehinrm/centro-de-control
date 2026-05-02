@@ -236,10 +236,11 @@
                         <span class="text-sm font-black text-blue-400 font-mono tracking-wider" id="lblAvgNivel">-- cm</span>
                     </div>
                 </div>
-                <div class="flex items-center gap-3 bg-red-500/10 px-4 py-2 rounded-xl border border-red-500/20 shadow-inner">
+                <!-- TARJETA BOTONIZADA -->
+                <div id="cardPicoMax" onclick="irAlPicoMaximo()" class="flex items-center gap-3 bg-red-500/10 hover:bg-red-500/20 cursor-pointer px-4 py-2 rounded-xl border border-red-500/20 shadow-inner transition-colors">
                     <div class="p-1.5 bg-red-500/20 rounded-md"><i data-lucide="trending-up" class="w-4 h-4 text-red-400"></i></div>
                     <div class="flex flex-col">
-                        <span class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Pico Máximo</span>
+                        <span class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Pico Máximo <i data-lucide="search" class="inline w-2 h-2"></i></span>
                         <span class="text-sm font-black text-red-400 font-mono tracking-wider" id="lblMaxPico">-- cm</span>
                     </div>
                 </div>
@@ -517,17 +518,37 @@
             const btnFilter = document.getElementById('btnApplyFilter');
             if (currentPeriod !== 'custom' && currentPeriod !== 'today') {
                 const fecha = new Date(timestamp);
+                // AJUSTE 1: Formato local para evitar el desfase de 5 horas UTC
                 const dateStr = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}-${String(fecha.getDate()).padStart(2, '0')}`;
                 document.getElementById('histPeriod').value = "custom";
                 document.getElementById('customDateRange').classList.remove('hidden');
                 document.getElementById('dateStart').value = dateStr;
                 document.getElementById('dateEnd').value = dateStr;
-                window.highlightTimestamp = timestamp;
+                
                 btnFilter.click();
+
+                // AJUSTE 2: Retardo táctico para asegurar que la gráfica se dibuje ANTES de hacer scroll
+                setTimeout(() => {
+                    window.highlightChartPoint(timestamp);
+                }, 100);
             } else {
                 window.highlightChartPoint(timestamp);
             }
             document.getElementById('seccionGrafica').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        };
+
+        // EVENTO: IR AL PICO MÁXIMO
+        window.irAlPicoMaximo = function() {
+            if (!window.currentChartData || window.currentChartData.length === 0) return;
+            let maxVal = -1;
+            let targetTs = null;
+            window.currentChartData.forEach(d => {
+                if(d.max > maxVal) {
+                    maxVal = d.max;
+                    targetTs = d.timestamp;
+                }
+            });
+            if(targetTs) verLecturaExacta(targetTs);
         };
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -566,16 +587,27 @@
                     layout: { padding: { top: 30, bottom: 0, left: 0, right: 20 } },
                     plugins: { legend: { display: false }, tooltip: { enabled: false } },
                     interaction: { mode: null },
-                    scales: { x: { grid: { display: false, drawBorder: false }, ticks: { font: { size: 10 }, color: 'transparent', maxRotation: 0 } }, y: { position: 'right', grid: { display: false, drawBorder: false }, ticks: { font: { size: 10, weight: 'bold' }, color: '#38bdf8', padding: 5, crossAlign: 'near' } } }
+                    scales: { 
+                        x: { 
+                            grid: { display: false, drawBorder: false }, 
+                            ticks: { font: { size: 10 }, color: 'transparent', maxRotation: 0 } 
+                        }, 
+                        y: { 
+                            position: 'right', 
+                            grid: { display: false, drawBorder: false }, 
+                            ticks: { font: { size: 10, weight: 'bold' }, color: '#38bdf8', padding: 5, crossAlign: 'near', stepSize: 20 } 
+                        } 
+                    }
                 }
             });
 
             const ctxHist = document.getElementById('advancedHistoricalChart')?.getContext('2d');
             window.advancedChart = new Chart(ctxHist, {
                 type: 'line',
-                data: { labels: [], datasets: [{ label: 'Valor Promedio', data: [], borderColor: '#38bdf8', backgroundColor: 'rgba(56, 189, 248, 0.1)', borderWidth: 2, pointBackgroundColor: '#0284c7', pointBorderColor: '#38bdf8', pointRadius: 2, fill: true, tension: 0.4 }] },
+                data: { labels: [], datasets: [{ label: 'Valor Registro', data: [], borderColor: '#38bdf8', backgroundColor: 'rgba(56, 189, 248, 0.1)', borderWidth: 2, pointBackgroundColor: '#0284c7', pointBorderColor: '#38bdf8', pointRadius: 2, fill: true }] },
                 options: { 
                     responsive: true, maintainAspectRatio: false,
+                    elements: { line: { tension: 0 } }, 
                     layout: { padding: { top: 30, bottom: 0, left: 10, right: 0 } },
                     onClick: (e, elements) => {
                         if (elements && elements.length > 0) {
@@ -584,6 +616,7 @@
                         }
                     },
                     plugins: { 
+                        decimation: { enabled: false }, 
                         legend: { display: false }, 
                         tooltip: { 
                             backgroundColor: 'rgba(15, 23, 42, 0.95)', titleColor: '#e2e8f0', bodyColor: '#cbd5e1', borderColor: '#3b82f6', borderWidth: 1, padding: 12, caretPadding: 10, 
@@ -592,15 +625,25 @@
                                     if (!window.currentChartData) return '';
                                     const dataPoint = window.currentChartData[context.dataIndex];
                                     if (!dataPoint) return '';
-                                    if (dataPoint.last >= nivelCriticoM * 100) return ' ESTADO: PELIGRO CRÍTICO 🔴';
-                                    if (dataPoint.last >= nivelAlertaM * 100) return ' ESTADO: ALERTA PREVENTIVA 🟡';
+                                    if (dataPoint.max >= nivelCriticoM * 100) return ' ESTADO: PELIGRO CRÍTICO 🔴';
+                                    if (dataPoint.max >= nivelAlertaM * 100) return ' ESTADO: ALERTA PREVENTIVA 🟡';
                                     return ' ESTADO: ESTABLE 🟢';
                                 }
                             }
                         } 
                     },
                     interaction: { mode: 'index', intersect: false },
-                    scales: { x: { grid: { color: 'rgba(51, 65, 85, 0.3)' }, ticks: { font: { size: 10 }, maxRotation: 0 } }, y: { position: 'right', grid: { color: 'rgba(51, 65, 85, 0.4)', drawBorder: false }, ticks: { display: false } } }
+                    scales: { 
+                        x: { 
+                            grid: { color: 'rgba(51, 65, 85, 0.3)', display: false }, 
+                            ticks: { font: { size: 10 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 8 } 
+                        }, 
+                        y: { 
+                            position: 'right', 
+                            grid: { color: 'rgba(51, 65, 85, 0.4)', drawBorder: false }, 
+                            ticks: { display: false, stepSize: 20 } 
+                        } 
+                    }
                 }
             });
 
@@ -677,8 +720,13 @@
                             monthsToFetch.push(`${prev.getFullYear()}/${String(prev.getMonth() + 1).padStart(2, '0')}`);
                         }
                     } else if (period === 'custom') {
-                        const ds = new Date(document.getElementById('dateStart').value);
-                        const de = new Date(document.getElementById('dateEnd').value);
+                        // AJUSTE FECHAS: Interpreta correctamente la zona local
+                        const dsParts = document.getElementById('dateStart').value.split('-');
+                        const deParts = document.getElementById('dateEnd').value.split('-');
+                        
+                        let ds = new Date(dsParts[0], dsParts[1] - 1, dsParts[2]);
+                        let de = new Date(deParts[0], deParts[1] - 1, deParts[2]);
+                        
                         let curr = new Date(ds.getFullYear(), ds.getMonth(), 1);
                         while (curr <= de) {
                             monthsToFetch.push(`${curr.getFullYear()}/${String(curr.getMonth() + 1).padStart(2, '0')}`);
@@ -833,22 +881,24 @@
                 const decNivel = isStd ? 1 : 2;
                 const decCaudal = isStd ? 3 : 1;
 
-                // LA MAGIA ESTÁ AQUÍ: Ajustamos los intervalos de compresión
                 if (period === 'today') {
                     filtered = fullDataset.filter(d => d.timestamp >= new Date().setHours(0,0,0,0));
-                    intervalMs = 1; // 0 COMPRESIÓN: Muestra la lectura exacta al segundo
+                    intervalMs = 1; 
                 } else if (period === '7d') {
                     filtered = fullDataset.filter(d => d.timestamp >= Date.now() - (7 * 24 * 60 * 60 * 1000));
-                    intervalMs = 60 * 1000 * 15; // Agrupa cada 15 min en vista semanal
+                    intervalMs = 60 * 1000 * 15; 
                 } else if (period === '1m') {
                     filtered = fullDataset.filter(d => d.timestamp >= Date.now() - (30 * 24 * 60 * 60 * 1000));
-                    intervalMs = 60 * 1000 * 60; // Agrupa cada 1 hora en vista mensual
+                    intervalMs = 60 * 1000 * 60; 
                 } else if (period === 'custom') {
-                    const dsStr = document.getElementById('dateStart').value;
-                    const deStr = document.getElementById('dateEnd').value;
-                    if(dsStr && deStr) {
-                        const ds = new Date(dsStr).getTime();
-                        const de = new Date(deStr).setHours(23,59,59,999);
+                    // AJUSTE DE ZONA HORARIA LOCAL EN FILTRO PERSONALIZADO
+                    const dsParts = document.getElementById('dateStart').value.split('-');
+                    const deParts = document.getElementById('dateEnd').value.split('-');
+                    
+                    if(dsParts.length === 3 && deParts.length === 3) {
+                        const ds = new Date(dsParts[0], dsParts[1] - 1, dsParts[2]).getTime();
+                        const de = new Date(deParts[0], deParts[1] - 1, deParts[2], 23, 59, 59, 999).getTime();
+                        
                         filtered = fullDataset.filter(d => d.timestamp >= ds && d.timestamp <= de);
                         intervalMs = (de - ds <= 86400000) ? 1 : 3600000;
                     }
@@ -867,7 +917,7 @@
                     const avg = g.levels.reduce((a,b) => a+b, 0) / g.levels.length;
                     const last = g.levels[g.levels.length - 1]; 
                     const max = Math.max(...g.levels); 
-                    const q = 1.45 * anchoL * Math.pow(last/100, 1.5); 
+                    const q = 1.45 * anchoL * Math.pow(max/100, 1.5); 
                     return { timestamp: g.timestamp, avg, last, max, caudal: isNaN(q) ? 0 : q };
                 });
 
@@ -881,14 +931,13 @@
 
                 const labelsArray = aggregated.map(d => {
                     const dateObj = new Date(d.timestamp);
-                    // Mostrar segundos si estamos viendo los datos crudos
                     if (intervalMs === 1) {
                         return dateObj.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
                     }
                     return intervalMs < 86400000 ? dateObj.toLocaleDateString('es-ES', {day:'2-digit', month:'short'}) + ' ' + dateObj.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'}) : dateObj.toLocaleDateString('es-ES', {day:'2-digit', month:'short'});
                 });
                 
-                const dataArray = aggregated.map(d => (metric === 'nivel' ? (d.last / fNivel).toFixed(decNivel) : (d.caudal * fCaudal).toFixed(decCaudal)));
+                const dataArray = aggregated.map(d => (metric === 'nivel' ? (d.max / fNivel).toFixed(decNivel) : (d.caudal * fCaudal).toFixed(decCaudal)));
 
                 if (dataArray.length > 0) {
                     const numericData = dataArray.map(Number);
@@ -911,7 +960,7 @@
                     const limitCritCm = nivelCriticoM * 100;
                     const limitAlertCm = nivelAlertaM * 100;
                     
-                    let badge = d.last >= limitCritCm ? '<span class="px-2.5 py-1 rounded-sm text-[9px] font-bold tracking-widest uppercase bg-red-500/20 text-red-400 border border-red-500/30">CRÍTICO</span>' : (d.last >= limitAlertCm ? '<span class="px-2.5 py-1 rounded-sm text-[9px] font-bold tracking-widest uppercase bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">ALERTA</span>' : '<span class="px-2.5 py-1 rounded-sm text-[9px] font-bold tracking-widest uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">ESTABLE</span>');
+                    let badge = d.max >= limitCritCm ? '<span class="px-2.5 py-1 rounded-sm text-[9px] font-bold tracking-widest uppercase bg-red-500/20 text-red-400 border border-red-500/30">CRÍTICO</span>' : (d.max >= limitAlertCm ? '<span class="px-2.5 py-1 rounded-sm text-[9px] font-bold tracking-widest uppercase bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">ALERTA</span>' : '<span class="px-2.5 py-1 rounded-sm text-[9px] font-bold tracking-widest uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">ESTABLE</span>');
                     
                     return `<tr id="row-${d.timestamp}" class="hover:bg-slate-800/60 transition-colors cursor-pointer group" onclick="verLecturaExacta(${d.timestamp})">
                         <td class="px-6 py-4 font-mono text-slate-400">${new Date(d.timestamp).toLocaleString('es-ES')}</td>
