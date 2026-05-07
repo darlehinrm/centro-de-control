@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HydroSentinel - Centro de Control NOC v5.0</title>
+    <title>HYDROSHILT - Centro de Control NOC v6.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        .water-fill { transition: height 1.5s ease-in-out, background-color 0.5s ease; }
+        .water-fill { transition: height 1.5s ease-in-out, background-color 0.5s ease, color 0.5s ease; }
         .crt-scanline {
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
             background-size: 100% 2px, 3px 100%;
@@ -51,7 +51,25 @@
         }
     </style>
 </head>
-<body class="bg-slate-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0a0f1c] to-black min-h-screen text-slate-300 font-sans pb-12">
+<body class="bg-slate-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0a0f1c] to-black min-h-screen text-slate-300 font-sans pb-4">
+
+    <div id="securityModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center">
+        <div class="bg-slate-900 border border-slate-700 p-6 rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.8)] max-w-sm w-full text-center relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-blue-500"></div>
+            <i data-lucide="lock" class="w-12 h-12 text-blue-500 mx-auto mb-4"></i>
+            <h3 class="text-lg font-black text-white tracking-widest uppercase mb-1">Acceso Restringido</h3>
+            <p class="text-[10px] text-slate-400 mb-6 font-bold uppercase">Ingrese credenciales operativas</p>
+            
+            <input type="text" id="inputUser" class="w-full bg-slate-950 border border-slate-700 text-center text-sm font-bold text-white py-3 rounded-xl focus:border-blue-500 outline-none mb-3 shadow-inner uppercase tracking-wider" placeholder="USUARIO">
+            <input type="password" id="inputPin" class="w-full bg-slate-950 border border-slate-700 text-center text-2xl text-white py-3 rounded-xl tracking-[0.5em] focus:border-blue-500 outline-none mb-4 shadow-inner" placeholder="••••••">
+            
+            <div class="flex gap-3">
+                <button onclick="cerrarModal()" class="w-1/2 py-3 rounded-xl text-[10px] uppercase font-bold tracking-widest bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Cancelar</button>
+                <button onclick="verificarPin()" class="w-1/2 py-3 rounded-xl text-[10px] uppercase font-bold tracking-widest bg-blue-600 text-white hover:bg-blue-500 shadow-[0_0_15px_rgba(37,99,235,0.4)] transition">Verificar</button>
+            </div>
+            <p id="pinError" class="text-red-400 text-[10px] font-bold mt-4 hidden bg-red-500/10 py-2 rounded uppercase tracking-widest border border-red-500/20">❌ CREDENCIAL INCORRECTA</p>
+        </div>
+    </div>
 
     <nav class="bg-slate-950/80 backdrop-blur-lg text-white shadow-2xl p-4 border-b border-blue-500/30 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
@@ -59,7 +77,12 @@
                 <div class="p-2 bg-blue-500/10 rounded-lg border border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.2)]">
                     <i data-lucide="shield-check" class="w-6 h-6 text-blue-400"></i>
                 </div>
-                <h1 class="text-xl md:text-2xl font-black tracking-wider truncate text-slate-100">HydroSentinel <span class="hidden lg:inline text-blue-500 text-xs font-bold ml-2 uppercase tracking-widest px-2 py-1 bg-blue-500/10 rounded border border-blue-500/20">v5.0 Nexus Global</span></h1>
+                <div class="flex flex-col">
+                    <h1 class="text-xl md:text-2xl font-black tracking-wider truncate text-slate-100 cursor-help" title="SISTEMA HIDROMETRICO INTEGRADO LIMNIGRAFIA - TELEMETRIA">
+                        HYDROSHILT <span class="hidden lg:inline text-blue-500 text-xs font-bold ml-2 uppercase tracking-widest px-2 py-1 bg-blue-500/10 rounded border border-blue-500/20">v6.0 Nexus Cloud</span>
+                    </h1>
+                    <span class="text-[7px] text-slate-500 tracking-widest uppercase hidden md:block mt-0.5">Sistema Hidrométrico Integrado Limnigrafía - Telemetría</span>
+                </div>
             </div>
             
             <div class="flex items-center gap-3 w-full md:w-auto">
@@ -73,8 +96,9 @@
                 </div>
 
                 <div class="flex items-center gap-2 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-700 shadow-inner">
-                    <i data-lucide="map-pin" class="w-4 h-4 text-slate-400"></i>
-                    <select id="nodoSelector" class="bg-transparent border-none text-slate-200 text-xs font-bold outline-none cursor-pointer w-full md:w-36 appearance-none focus:ring-0 [color-scheme:dark]">
+                    <i data-lucide="map-pin" class="w-4 h-4 text-emerald-400"></i>
+                    <select id="sitioSelector" class="bg-transparent border-none text-emerald-400 text-xs font-bold outline-none cursor-pointer w-full md:w-48 appearance-none focus:ring-0 [color-scheme:dark]">
+                        <option value="">Cargando Ubicaciones...</option>
                     </select>
                     <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500 pointer-events-none"></i>
                 </div>
@@ -89,47 +113,80 @@
 
     <main class="max-w-7xl mx-auto p-4 md:p-6 mt-4">
         
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-            <div class="glass-dark rounded-2xl shadow-xl p-6 relative group hover:border-blue-500/30 transition-colors">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-6">
+            
+            <div class="glass-dark rounded-2xl shadow-xl p-6 relative flex flex-col items-center justify-center lg:col-span-1 group hover:border-blue-500/30 transition-colors">
                 <div class="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent rounded-2xl pointer-events-none"></div>
-                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2">
+                <h3 class="text-[9px] font-bold text-slate-500 uppercase tracking-widest w-full text-center mb-4 relative z-10">Modelo Digital</h3>
+                <div id="tanqueContenedor" class="relative w-20 h-[110px] border-x-2 border-b-2 border-slate-700 rounded-b bg-slate-900 overflow-hidden shadow-[inset_0_4px_15px_rgba(0,0,0,0.8)] z-10" style="transition: clip-path 0.5s ease, border-radius 0.5s ease;">
+                    <div class="absolute inset-0 z-20 flex flex-col pointer-events-none">
+                        <div id="markerSensor" class="w-full border-b border-blue-400/80 absolute left-0 flex justify-start items-center" style="top: 0%;">
+                            <span class="text-[7px] font-mono font-bold text-blue-300 bg-slate-900/90 px-1 py-0.5 rounded border border-blue-500/30 ml-1 shadow-md" id="lblSensor">--</span>
+                        </div>
+                        <div id="markerCritico" class="w-full border-b border-red-500/80 border-dashed absolute left-0 flex justify-start items-center transition-all duration-700">
+                            <span class="text-[7px] font-mono font-bold text-red-400 bg-slate-900/90 px-1 py-0.5 rounded border border-red-500/30 ml-1 shadow-md" id="lblCritico">--</span>
+                        </div>
+                        <div id="markerAlerta" class="w-full border-b border-yellow-500/80 border-dashed absolute left-0 flex justify-start items-center transition-all duration-700">
+                            <span class="text-[7px] font-mono font-bold text-yellow-400 bg-slate-900/90 px-1 py-0.5 rounded border border-yellow-500/30 ml-1 shadow-md" id="lblAlerta">--</span>
+                        </div>
+                    </div>
+                    <div id="waterLevel" class="absolute bottom-0 left-0 w-full bg-blue-500/80 text-blue-500 water-fill flex flex-col items-center justify-start z-10" style="height: 0%;">
+                        <div class="absolute top-0 left-0 w-[200%] h-1 -translate-y-[80%] flex wave-anim text-inherit opacity-50">
+                            <svg class="w-1/2 h-full fill-current" preserveAspectRatio="none" viewBox="0 0 1200 120"><path d="M0,50 C150,150 350,-50 600,50 C850,150 1050,-50 1200,50 L1200,120 L0,120 Z"></path></svg>
+                            <svg class="w-1/2 h-full fill-current -ml-[1px]" preserveAspectRatio="none" viewBox="0 0 1200 120"><path d="M0,50 C150,150 350,-50 600,50 C850,150 1050,-50 1200,50 L1200,120 L0,120 Z"></path></svg>
+                        </div>
+                        <div class="absolute top-0 left-0 w-[200%] h-1.5 -translate-y-[90%] flex wave-anim-fast text-inherit">
+                            <svg class="w-1/2 h-full fill-current" preserveAspectRatio="none" viewBox="0 0 1200 120"><path d="M0,50 C150,150 350,-50 600,50 C850,150 1050,-50 1200,50 L1200,120 L0,120 Z"></path></svg>
+                            <svg class="w-1/2 h-full fill-current -ml-[1px]" preserveAspectRatio="none" viewBox="0 0 1200 120"><path d="M0,50 C150,150 350,-50 600,50 C850,150 1050,-50 1200,50 L1200,120 L0,120 Z"></path></svg>
+                        </div>
+                        <span id="waterPercent" class="text-[8px] font-mono font-bold text-white/90 tracking-widest mt-1 relative z-10 drop-shadow-md"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-dark rounded-2xl shadow-xl p-6 relative group hover:border-blue-500/30 transition-colors lg:col-span-1 flex flex-col justify-center">
+                <div class="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent rounded-2xl pointer-events-none"></div>
+                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2 relative z-10">
                     <i data-lucide="activity" class="w-3 h-3 text-blue-400"></i> Nivel Actual (h)
                 </p>
-                <div class="flex items-baseline space-x-2 mt-2 relative z-10">
-                    <h2 class="text-5xl font-black text-slate-700 transition-colors duration-500 drop-shadow-lg" id="currentLevel">--</h2>
+                <div class="flex items-baseline space-x-2 mt-4 relative z-10">
+                    <h2 class="text-6xl font-black text-slate-700 transition-colors duration-500 drop-shadow-lg" id="currentLevel">--</h2>
                     <span class="text-xl text-slate-500 font-bold" id="unitLblNivel">cm</span>
                 </div>
             </div>
-            <div class="glass-dark rounded-2xl shadow-xl p-6 relative group hover:border-cyan-500/30 transition-colors">
+
+            <div class="glass-dark rounded-2xl shadow-xl p-6 relative group hover:border-cyan-500/30 transition-colors lg:col-span-1 flex flex-col justify-center">
                 <div class="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-transparent rounded-2xl pointer-events-none"></div>
-                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2">
+                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2 relative z-10">
                     <i data-lucide="waves" class="w-3 h-3 text-cyan-400"></i> Caudal (Q)
                 </p>
-                <div class="flex items-baseline space-x-2 mt-2 relative z-10">
+                <div class="flex items-baseline space-x-2 mt-4 relative z-10">
                     <h2 class="text-5xl font-black text-slate-700 transition-colors duration-500 drop-shadow-lg" id="currentFlow">--</h2>
-                    <span class="text-xl text-slate-500 font-bold" id="unitLblCaudal">m³/s</span>
+                    <span class="text-sm text-slate-500 font-bold" id="unitLblCaudal">m³/s</span>
                 </div>
             </div>
-            <div class="glass-dark rounded-2xl shadow-xl p-6 relative">
+
+            <div class="glass-dark rounded-2xl shadow-xl p-6 relative lg:col-span-1 flex flex-col justify-center">
                 <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2">
-                    <i data-lucide="server" class="w-3 h-3 text-slate-400"></i> Estado <span id="lblNodoEstado">--</span>
+                    <i data-lucide="server" class="w-3 h-3 text-slate-400"></i> Estado <span id="lblNodoEstado" class="truncate max-w-[80px]">--</span>
                 </p>
-                <div id="statusBox" class="flex items-center space-x-3 mt-3 relative z-10">
-                    <div id="statusIcon" class="p-3 bg-slate-800/50 rounded-xl text-slate-500 border border-slate-700/50">
-                        <i data-lucide="refresh-cw" class="w-8 h-8 animate-spin"></i>
+                <div id="statusBox" class="flex flex-col space-y-2 mt-3 relative z-10">
+                    <div id="statusIcon" class="p-3 bg-slate-800/50 rounded-xl text-slate-500 border border-slate-700/50 self-start transition-colors duration-500">
+                        <i data-lucide="refresh-cw" class="w-6 h-6 animate-spin"></i>
                     </div>
                     <div>
-                        <h2 class="text-xl font-bold text-slate-400 uppercase tracking-tight" id="systemStatus">SINCRONIZANDO</h2>
-                        <span class="text-[10px] font-medium text-slate-500" id="statusDesc">Verificando enlace de red...</span>
+                        <h2 class="text-lg font-bold text-slate-400 uppercase tracking-tight leading-none" id="systemStatus">SINCRONIZANDO</h2>
+                        <span class="text-[9px] font-medium text-slate-500" id="statusDesc">Verificando enlace...</span>
                     </div>
                 </div>
             </div>
-            <div class="glass-dark rounded-2xl shadow-xl p-6 relative flex flex-col justify-between">
+
+            <div class="glass-dark rounded-2xl shadow-xl p-6 relative flex flex-col justify-between lg:col-span-1">
                 <div>
                     <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2">
                         <i data-lucide="clock" class="w-3 h-3 text-slate-400"></i> Último Reporte
                     </p>
-                    <h2 class="text-2xl font-mono font-bold text-slate-300 mt-2 relative z-10 tracking-wider" id="lastSync">--:--:--</h2>
+                    <h2 class="text-xl font-mono font-bold text-slate-300 mt-2 relative z-10 tracking-wider" id="lastSync">--:--:--</h2>
                 </div>
                 <div class="mt-4 w-full relative z-10">
                     <div class="w-full bg-slate-800/80 h-1.5 rounded-full overflow-hidden border border-slate-700/50 mb-3">
@@ -142,7 +199,108 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <div class="glass-dark rounded-2xl shadow-xl p-6 mb-6 relative z-20" id="seccionGrafica">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <i data-lucide="bar-chart-2" class="w-4 h-4 text-blue-500"></i> Tendencia Analítica del Sitio
+                </h3>
+                <div class="flex flex-wrap items-center gap-3 bg-slate-900/80 p-2 rounded-xl border border-slate-800 shadow-inner">
+                    <select id="histPeriod" class="bg-slate-950 border border-slate-700 text-slate-300 text-[10px] font-bold rounded-lg px-3 py-2 cursor-pointer outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors">
+                        <option value="today">Hoy (Lecturas al Minuto)</option>
+                        <option value="specific_day">Día Específico 📅</option>
+                        <option value="7d">Últimos 7 Días</option>
+                        <option value="1m" selected>Último Mes (30 Días)</option>
+                        <option value="all" class="text-blue-400">Todo el Historial (Sin Filtro)</option>
+                        <option value="custom">Rango Personalizado 📅</option>
+                    </select>
+
+                    <div id="customDateRange" class="hidden flex-row items-center gap-2 border-l border-slate-700 pl-3 transition-all">
+                        <input type="date" id="dateStart" class="bg-slate-950 border border-slate-700 text-slate-300 text-[10px] font-bold rounded-lg px-2 py-1.5 outline-none focus:border-blue-500 [color-scheme:dark]">
+                        <span id="lblAl" class="text-slate-500 text-[10px] font-bold">al</span>
+                        <input type="date" id="dateEnd" class="bg-slate-950 border border-slate-700 text-slate-300 text-[10px] font-bold rounded-lg px-2 py-1.5 outline-none focus:border-blue-500 [color-scheme:dark]">
+                        <button id="btnApplyFilter" class="bg-blue-600/80 text-white px-4 py-1.5 rounded-lg text-[10px] font-bold hover:bg-blue-500 border border-blue-500/50 shadow-[0_0_10px_rgba(37,99,235,0.2)] transition-all">Aplicar</button>
+                    </div>
+
+                    <select id="histMetric" class="bg-slate-950 border border-slate-700 text-slate-300 text-[10px] font-bold rounded-lg px-3 py-2 cursor-pointer outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors">
+                        <option value="nivel" id="optMetNivel">Niveles (cm)</option>
+                        <option value="caudal" id="optMetCaudal">Caudal (m³/s)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap gap-4 mb-6 pb-6 border-b border-slate-800">
+                <div class="flex items-center gap-3 bg-blue-500/10 px-4 py-2 rounded-xl border border-blue-500/20 shadow-inner">
+                    <div class="p-1.5 bg-blue-500/20 rounded-md"><i data-lucide="activity" class="w-4 h-4 text-blue-400"></i></div>
+                    <div class="flex flex-col">
+                        <span class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Promedio Periodo</span>
+                        <span class="text-sm font-black text-blue-400 font-mono tracking-wider" id="lblAvgNivel">-- cm</span>
+                    </div>
+                </div>
+                <div id="cardPicoMax" onclick="irAlPicoMaximo()" class="flex items-center gap-3 bg-red-500/10 hover:bg-red-500/20 cursor-pointer px-4 py-2 rounded-xl border border-red-500/20 shadow-inner transition-colors">
+                    <div class="p-1.5 bg-red-500/20 rounded-md"><i data-lucide="trending-up" class="w-4 h-4 text-red-400"></i></div>
+                    <div class="flex flex-col">
+                        <span class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Pico Máximo <i data-lucide="search" class="inline w-2 h-2"></i></span>
+                        <span class="text-sm font-black text-red-400 font-mono tracking-wider" id="lblMaxPico">-- cm</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 bg-cyan-500/10 px-4 py-2 rounded-xl border border-cyan-500/20 shadow-inner">
+                    <div class="p-1.5 bg-cyan-500/20 rounded-md"><i data-lucide="waves" class="w-4 h-4 text-cyan-400"></i></div>
+                    <div class="flex flex-col">
+                        <span class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Caudal Promedio</span>
+                        <span class="text-sm font-black text-cyan-400 font-mono tracking-wider" id="lblAvgCaudal">-- m³/s</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 ml-auto">
+                    <span class="text-[8px] font-bold text-slate-500 uppercase tracking-widest">Leyenda Ec.:</span>
+                    <div class="flex gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-[#64748b] shadow" title="Legacy"></span>
+                        <span class="w-2.5 h-2.5 rounded-full bg-[#3b82f6] shadow" title="Rectangular"></span>
+                        <span class="w-2.5 h-2.5 rounded-full bg-[#22c55e] shadow" title="Parshall"></span>
+                        <span class="w-2.5 h-2.5 rounded-full bg-[#a855f7] shadow" title="Manning"></span>
+                        <span class="w-2.5 h-2.5 rounded-full bg-[#eab308] shadow" title="V-Notch"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="relative h-80 w-full flex bg-slate-900/30 rounded-xl border border-slate-800 overflow-hidden shadow-inner flex-row">
+                <div class="flex-grow overflow-x-auto custom-scrollbar" id="chartWrapper">
+                    <div id="chartScrollArea" class="h-full" style="min-width: 100%;">
+                        <canvas id="advancedHistoricalChart"></canvas>
+                    </div>
+                </div>
+                <div class="w-20 flex-shrink-0 bg-slate-950/90 z-20 border-l border-slate-800 relative shadow-[-5px_0_15px_-5px_rgba(0,0,0,0.5)]">
+                    <canvas id="yAxisChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-dark rounded-2xl shadow-xl overflow-hidden mb-6">
+            <div class="px-6 py-5 border-b border-slate-800 bg-slate-900/50 flex justify-between items-center">
+                <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <i data-lucide="file-text" class="w-4 h-4 text-blue-500"></i> Registro Analítico <span id="lblTablaNodo"></span> (Clic en Gráfica para Resaltar)
+                </h3>
+            </div>
+            <div class="overflow-x-auto custom-scrollbar bg-slate-950/30 max-h-96">
+                <table class="w-full text-left text-sm whitespace-nowrap relative">
+                    <thead class="bg-slate-900/90 backdrop-blur-sm text-slate-500 font-bold uppercase text-[9px] tracking-widest border-b border-slate-800 sticky top-0 z-10">
+                        <tr>
+                            <th class="px-6 py-4">Fecha / Hora</th>
+                            <th class="px-6 py-4 text-center" id="thNivel">Nivel Cierre (cm)</th>
+                            <th class="px-6 py-4 text-center" id="thPico">Pico Máx. (cm)</th>
+                            <th class="px-6 py-4 text-center" id="thCaudal">Caudal Est. (m³/s)</th>
+                            <th class="px-6 py-4 text-center">Fórmula Base</th>
+                            <th class="px-6 py-4">Estado Alerta</th>
+                            <th class="px-6 py-4 text-center">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-800/60 text-xs text-slate-300" id="tablaReportes">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             <div class="glass-dark rounded-2xl shadow-xl lg:col-span-2 overflow-hidden flex flex-col relative">
                 <div class="flex justify-between items-center px-6 py-4 border-b border-slate-800 bg-slate-900/50">
                     <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
@@ -159,7 +317,7 @@
                             <div class="absolute w-20 h-20 border border-blue-500/40 rounded-full radar-ring" style="animation-delay: 1s"></div>
                             <i data-lucide="video-off" class="w-10 h-10 text-slate-700"></i>
                         </div>
-                        <p class="text-slate-600 font-mono text-[10px] uppercase tracking-[0.2em] shadow-black drop-shadow-md">Conectando a cámara IP externa...</p>
+                        <p class="text-slate-600 font-mono text-[10px] uppercase tracking-[0.2em] shadow-black drop-shadow-md">Esperando enlace físico...</p>
                     </div>
                     <img id="ipCameraFeed" src="" class="hidden w-full h-full object-cover opacity-60" alt="Live Feed" onerror="this.classList.add('hidden'); document.getElementById('videoPlaceholder').classList.remove('hidden');">
                     <div class="absolute inset-0 crt-scanline opacity-30 pointer-events-none"></div>
@@ -201,176 +359,305 @@
             </div>
         </div>
 
-        <div class="glass-dark rounded-2xl shadow-xl p-6 mb-8 relative z-20" id="seccionGrafica">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                    <i data-lucide="bar-chart-2" class="w-4 h-4 text-blue-500"></i> Tendencia Analítica del Nodo
-                </h3>
-                <div class="flex flex-wrap items-center gap-3 bg-slate-900/80 p-2 rounded-xl border border-slate-800 shadow-inner">
-                    <select id="histPeriod" class="bg-slate-950 border border-slate-700 text-slate-300 text-[10px] font-bold rounded-lg px-3 py-2 cursor-pointer outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors">
-                        <option value="today">Hoy (Lecturas al Minuto)</option>
-                        <option value="specific_day">Día Específico 📅</option>
-                        <option value="7d">Últimos 7 Días</option>
-                        <option value="1m" selected>Último Mes (30 Días)</option>
-                        <option value="custom">Rango Personalizado 📅</option>
-                    </select>
-
-                    <div id="customDateRange" class="hidden flex items-center gap-2 border-l border-slate-700 pl-3">
-                        <input type="date" id="dateStart" class="bg-slate-950 border border-slate-700 text-slate-300 text-[10px] font-bold rounded-lg px-2 py-1.5 outline-none focus:border-blue-500 [color-scheme:dark]">
-                        <span id="lblAl" class="text-slate-500 text-[10px] font-bold">al</span>
-                        <input type="date" id="dateEnd" class="bg-slate-950 border border-slate-700 text-slate-300 text-[10px] font-bold rounded-lg px-2 py-1.5 outline-none focus:border-blue-500 [color-scheme:dark]">
-                        <button id="btnApplyFilter" class="bg-blue-600/80 text-white px-4 py-1.5 rounded-lg text-[10px] font-bold hover:bg-blue-500 border border-blue-500/50 shadow-[0_0_10px_rgba(37,99,235,0.2)] transition-all">Aplicar</button>
-                    </div>
-
-                    <select id="histMetric" class="bg-slate-950 border border-slate-700 text-slate-300 text-[10px] font-bold rounded-lg px-3 py-2 cursor-pointer outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors">
-                        <option value="nivel" id="optMetNivel">Niveles (cm)</option>
-                        <option value="caudal" id="optMetCaudal">Caudal (m³/s)</option>
-                    </select>
+        <div class="grid grid-cols-1 gap-6">
+            <div class="bg-[#0f172a] rounded-2xl p-6 border border-slate-800 shadow-[inset_0_2px_20px_rgba(0,0,0,0.5)] relative overflow-hidden flex flex-col">
+                
+                <div id="calibracionOverlay" class="absolute inset-0 bg-slate-950/80 backdrop-blur-[3px] z-30 flex flex-col items-center justify-center border border-slate-800/50">
+                    <i data-lucide="shield-alert" class="w-12 h-12 text-slate-500 mb-3 drop-shadow-[0_0_10px_rgba(0,0,0,0.8)]"></i>
+                    <p class="text-slate-300 text-[11px] font-black mb-4 tracking-[0.2em] uppercase">Panel de Configuración Bloqueado</p>
+                    <button onclick="abrirModal()" class="bg-blue-600/20 text-blue-400 border border-blue-500/30 px-6 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-[0_0_15px_rgba(37,99,235,0.2)] flex items-center gap-2"><i data-lucide="key" class="w-4 h-4"></i> Desbloquear Seguridad</button>
                 </div>
-            </div>
 
-            <div class="flex flex-wrap gap-4 mb-6 pb-6 border-b border-slate-800">
-                <div class="flex items-center gap-3 bg-blue-500/10 px-4 py-2 rounded-xl border border-blue-500/20 shadow-inner">
-                    <div class="p-1.5 bg-blue-500/20 rounded-md"><i data-lucide="activity" class="w-4 h-4 text-blue-400"></i></div>
-                    <div class="flex flex-col">
-                        <span class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Promedio Periodo</span>
-                        <span class="text-sm font-black text-blue-400 font-mono tracking-wider" id="lblAvgNivel">-- cm</span>
-                    </div>
-                </div>
-                <!-- TARJETA BOTONIZADA -->
-                <div id="cardPicoMax" onclick="irAlPicoMaximo()" class="flex items-center gap-3 bg-red-500/10 hover:bg-red-500/20 cursor-pointer px-4 py-2 rounded-xl border border-red-500/20 shadow-inner transition-colors">
-                    <div class="p-1.5 bg-red-500/20 rounded-md"><i data-lucide="trending-up" class="w-4 h-4 text-red-400"></i></div>
-                    <div class="flex flex-col">
-                        <span class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Pico Máximo <i data-lucide="search" class="inline w-2 h-2"></i></span>
-                        <span class="text-sm font-black text-red-400 font-mono tracking-wider" id="lblMaxPico">-- cm</span>
-                    </div>
-                </div>
-                <div class="flex items-center gap-3 bg-cyan-500/10 px-4 py-2 rounded-xl border border-cyan-500/20 shadow-inner">
-                    <div class="p-1.5 bg-cyan-500/20 rounded-md"><i data-lucide="waves" class="w-4 h-4 text-cyan-400"></i></div>
-                    <div class="flex flex-col">
-                        <span class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Caudal Promedio</span>
-                        <span class="text-sm font-black text-cyan-400 font-mono tracking-wider" id="lblAvgCaudal">-- m³/s</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="relative h-80 w-full flex bg-slate-900/30 rounded-xl border border-slate-800 overflow-hidden shadow-inner flex-row">
-                <div class="flex-grow overflow-x-auto custom-scrollbar" id="chartWrapper">
-                    <div id="chartScrollArea" class="h-full" style="min-width: 100%;">
-                        <canvas id="advancedHistoricalChart"></canvas>
-                    </div>
-                </div>
-                <div class="w-20 flex-shrink-0 bg-slate-950/90 z-20 border-l border-slate-800 relative shadow-[-5px_0_15px_-5px_rgba(0,0,0,0.5)]">
-                    <canvas id="yAxisChart"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <div class="glass-dark rounded-2xl shadow-xl overflow-hidden mb-8">
-            <div class="px-6 py-5 border-b border-slate-800 bg-slate-900/50 flex justify-between items-center">
-                <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                    <i data-lucide="file-text" class="w-4 h-4 text-blue-500"></i> Registro Analítico <span id="lblTablaNodo"></span> (Clic en Gráfica para Resaltar)
-                </h3>
-            </div>
-            <div class="overflow-x-auto custom-scrollbar bg-slate-950/30 max-h-96">
-                <table class="w-full text-left text-sm whitespace-nowrap relative">
-                    <thead class="bg-slate-900/90 backdrop-blur-sm text-slate-500 font-bold uppercase text-[9px] tracking-widest border-b border-slate-800 sticky top-0 z-10">
-                        <tr>
-                            <th class="px-6 py-4">Fecha / Hora</th>
-                            <th class="px-6 py-4 text-center" id="thNivel">Nivel Cierre (cm)</th>
-                            <th class="px-6 py-4 text-center" id="thPico">Pico Máx. (cm)</th>
-                            <th class="px-6 py-4 text-center" id="thCaudal">Caudal Est. (m³/s)</th>
-                            <th class="px-6 py-4">Estado Alerta</th>
-                            <th class="px-6 py-4 text-center">Acción</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-800/60 text-xs text-slate-300" id="tablaReportes">
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <div class="bg-[#0f172a] rounded-2xl p-6 border border-slate-800 shadow-[inset_0_2px_20px_rgba(0,0,0,0.5)] lg:col-span-3 relative overflow-hidden">
                 <div class="absolute top-0 right-0 p-8 opacity-5"><i data-lucide="settings" class="w-48 h-48 text-blue-500"></i></div>
-                <h3 class="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-6 flex items-center gap-2 relative z-10">
-                    <i data-lucide="sliders" class="w-4 h-4"></i> Calibración Hardware SCADA (OTA)
+                <h3 class="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-4 flex items-center gap-2 relative z-10">
+                    <i data-lucide="sliders" class="w-4 h-4"></i> Administración SCADA (OTA)
                 </h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 items-end relative z-10">
-                    <div>
-                        <label class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-2">Ancho Canal (L)</label>
-                        <div class="relative">
-                            <input type="number" id="inputAnchoL" value="1.0" step="0.1" class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-4 pr-8 py-3 text-white font-mono font-bold outline-none focus:border-blue-500 focus:shadow-[0_0_10px_rgba(59,130,246,0.3)] transition-all">
-                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-bold">m</span>
+
+                <div class="flex border-b border-slate-700 mb-6 relative z-10 overflow-x-auto custom-scrollbar">
+                    <button id="btnTab1" onclick="switchTab(1)" class="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-blue-400 border-b-2 border-blue-500 bg-blue-500/10 whitespace-nowrap"><i data-lucide="activity" class="inline w-3 h-3 mr-1"></i> 1. Calibración Física</button>
+                    <button id="btnTab2" onclick="switchTab(2)" class="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:text-slate-300 whitespace-nowrap"><i data-lucide="map" class="inline w-3 h-3 mr-1"></i> 2. Catálogo de Sitios</button>
+                    <button id="btnTab3" onclick="switchTab(3)" class="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:text-slate-300 whitespace-nowrap"><i data-lucide="link" class="inline w-3 h-3 mr-1"></i> 3. Gestión Nodos & Enlaces</button>
+                </div>
+
+                <div id="tab1_content" class="flex-grow block relative z-10">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                        <div>
+                            <label class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-2">Ecuación Nube</label>
+                            <div class="relative">
+                                <select id="selEcuacion" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-3 text-white text-[10px] font-mono font-bold outline-none focus:border-blue-500 focus:shadow-[0_0_10px_rgba(59,130,246,0.3)] transition-all appearance-none cursor-pointer">
+                                    <option value="rectangular">Rectangular</option>
+                                    <option value="v_notch">V-Notch (Tri.)</option>
+                                    <option value="parshall">Parshall</option>
+                                    <option value="manning">Manning</option>
+                                    <option value="cipolletti">Cipolletti</option>
+                                    <option value="h_flume">H-Flume</option>
+                                </select>
+                                <i data-lucide="chevron-down" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none"></i>
+                            </div>
                         </div>
-                    </div>
-                    <div>
-                        <label class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-2">Ubicación Sensor</label>
-                        <div class="relative">
-                            <input type="number" id="inputSensorPos" value="1.8" step="0.01" class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-4 pr-8 py-3 text-white font-mono font-bold outline-none focus:border-blue-500 focus:shadow-[0_0_10px_rgba(59,130,246,0.3)] transition-all">
-                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-bold">m</span>
+                        <div>
+                            <label class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-2">Límite Alerta</label>
+                            <div class="relative">
+                                <input type="number" id="inputAlerta" value="1.6" step="0.01" class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-4 pr-8 py-3 text-yellow-400 font-mono font-bold outline-none focus:border-yellow-500 transition-all">
+                                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-bold">m</span>
+                            </div>
                         </div>
-                    </div>
-                    <div>
-                        <label class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-2">Límite Alerta</label>
-                        <div class="relative">
-                            <input type="number" id="inputAlerta" value="1.6" step="0.01" class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-4 pr-8 py-3 text-yellow-400 font-mono font-bold outline-none focus:border-yellow-500 focus:shadow-[0_0_10px_rgba(234,179,8,0.3)] transition-all">
-                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-bold">m</span>
+                        <div>
+                            <label class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-2">Límite Crítico</label>
+                            <div class="relative">
+                                <input type="number" id="inputCritico" value="1.8" step="0.01" class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-4 pr-8 py-3 text-red-400 font-mono font-bold outline-none focus:border-red-500 transition-all">
+                                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-bold">m</span>
+                            </div>
                         </div>
-                    </div>
-                    <div>
-                        <label class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-2">Límite Crítico</label>
-                        <div class="relative">
-                            <input type="number" id="inputCritico" value="1.8" step="0.01" class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-4 pr-8 py-3 text-red-400 font-mono font-bold outline-none focus:border-red-500 focus:shadow-[0_0_10px_rgba(239,68,68,0.3)] transition-all">
-                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-bold">m</span>
+                        <div>
+                            <label class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-2">Ubicación Sensor (h)</label>
+                            <div class="relative">
+                                <input type="number" id="inputSensorPos" value="1.8" step="0.01" class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-4 pr-8 py-3 text-white font-mono font-bold outline-none focus:border-blue-500 transition-all">
+                                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-bold">m</span>
+                            </div>
+                        </div>
+
+                        <div class="col-span-1 md:col-span-2 lg:col-span-4 p-4 bg-slate-900/50 border border-slate-700/50 rounded-xl mt-2">
+                            <h4 class="text-[9px] font-bold text-blue-400 uppercase tracking-widest mb-4 border-b border-slate-700/50 pb-2">Variables Matemáticas Requeridas</h4>
+                            
+                            <div id="wrap_L" class="block w-full md:w-1/4">
+                                <label class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-2">Ancho Canal (L)</label>
+                                <div class="relative">
+                                    <input type="number" id="inputAnchoL" value="1.0" step="0.1" class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-4 pr-8 py-2 text-white font-mono font-bold outline-none focus:border-blue-500 transition-all">
+                                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-bold">m</span>
+                                </div>
+                            </div>
+
+                            <div id="wrap_Parshall" class="hidden grid-cols-1 md:grid-cols-2 gap-4 w-full md:w-1/2">
+                                <div>
+                                    <label class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-2">Coeficiente (k)</label>
+                                    <input type="number" id="inputParshallK" value="1.0" step="0.01" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-white font-mono font-bold outline-none focus:border-blue-500 transition-all">
+                                </div>
+                                <div>
+                                    <label class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-2">Exponente (n_exp)</label>
+                                    <input type="number" id="inputParshallN" value="1.5" step="0.01" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-white font-mono font-bold outline-none focus:border-blue-500 transition-all">
+                                </div>
+                            </div>
+
+                            <div id="wrap_Manning" class="hidden grid-cols-1 md:grid-cols-2 gap-4 w-full md:w-1/2 mt-4">
+                                <div>
+                                    <label class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-2">Coef. Rugosidad (n)</label>
+                                    <input type="number" id="inputManningN" value="0.013" step="0.001" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-white font-mono font-bold outline-none focus:border-blue-500 transition-all">
+                                </div>
+                                <div>
+                                    <label class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-2">Pendiente (S)</label>
+                                    <input type="number" id="inputManningS" value="0.001" step="0.0001" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-white font-mono font-bold outline-none focus:border-blue-500 transition-all">
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
+
+                <div id="tab2_content" class="flex-grow hidden relative z-10">
+                    <div class="flex flex-col md:flex-row gap-4 items-end mb-6">
+                        <div class="w-full md:w-2/3">
+                            <label class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-2">Agregar Nuevo Sitio (Ubicación Geográfica)</label>
+                            <div class="relative">
+                                <input type="text" id="inputNuevoSitio" placeholder="Ej: Canal Norte Salitre" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-emerald-400 font-mono font-bold outline-none focus:border-emerald-500 transition-all">
+                                <i data-lucide="plus-circle" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none"></i>
+                            </div>
+                        </div>
+                        <button onclick="guardarNuevoSitio()" class="w-full md:w-1/3 bg-emerald-600/20 border border-emerald-500/50 text-emerald-400 hover:bg-emerald-600 hover:text-white font-bold py-3 px-4 rounded-xl text-[10px] uppercase tracking-widest transition-all">Registrar Sitio</button>
+                    </div>
+                    <div class="bg-slate-950/50 border border-slate-800 rounded-xl p-4 h-40 overflow-y-auto custom-scrollbar">
+                        <h4 class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-3">Sitios Disponibles en Cloud</h4>
+                        <ul id="listaCatalogoSitios" class="text-xs text-slate-400 space-y-2"></ul>
+                    </div>
+                </div>
+
+                <div id="tab3_content" class="flex-grow hidden relative z-10">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        
+                        <div class="bg-slate-900/50 p-6 rounded-xl border border-slate-700/50 flex flex-col justify-between">
+                            <div>
+                                <h4 class="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-4 border-b border-slate-700/50 pb-3"><i data-lucide="cpu" class="inline w-4 h-4 mr-2 align-text-bottom"></i> 1. Alta de Nuevo Hardware (Nodo)</h4>
+                                <p class="text-[9px] text-slate-500 mb-4 leading-relaxed">Registre el identificador exacto programado en el código de su placa ESP32 (Ej: estacion_04) para que el NOC autorice su conexión y lo ponga en línea.</p>
+                                
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-2">ID Interno del Nodo</label>
+                                        <input type="text" id="inputNuevoNodoID" placeholder="Ej: estacion_04" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white font-mono text-[10px] outline-none focus:border-blue-500 transition-all">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-2">URL Cámara IP (Opcional)</label>
+                                        <input type="text" id="inputNuevoNodoCam" placeholder="http://192.168.1.50:81/stream" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white font-mono text-[10px] outline-none focus:border-blue-500 transition-all">
+                                    </div>
+                                </div>
+                            </div>
+                            <button onclick="guardarNuevoNodo()" class="w-full mt-6 bg-blue-600/20 border border-blue-500/50 text-blue-400 hover:bg-blue-600 hover:text-white font-bold py-3 px-4 rounded-xl text-[10px] uppercase tracking-widest transition-all shadow-[0_0_15px_rgba(37,99,235,0.2)]">Registrar Nodo</button>
+                        </div>
+
+                        <div class="bg-slate-900/50 p-6 rounded-xl border border-slate-700/50 flex flex-col justify-between">
+                            <div>
+                                <h4 class="text-[10px] font-bold text-cyan-400 uppercase tracking-widest mb-4 border-b border-slate-700/50 pb-3"><i data-lucide="link" class="inline w-4 h-4 mr-2 align-text-bottom"></i> 2. Asignación Física (Nodo ➔ Sitio)</h4>
+                                <p class="text-[9px] text-slate-500 mb-4 leading-relaxed">Conecte una placa de hardware a una ubicación geográfica. Los datos forenses del hardware se guardarán exclusivamente en la carpeta de este sitio.</p>
+
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-2">Seleccione el Hardware (Nodo)</label>
+                                        <div class="relative">
+                                            <select id="selVincularNodo" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white font-mono text-[10px] outline-none focus:border-cyan-500 appearance-none cursor-pointer"></select>
+                                            <i data-lucide="chevron-down" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none"></i>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-2">Seleccione la Ubicación (Sitio)</label>
+                                        <div class="relative">
+                                            <select id="selVincularSitio" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white font-mono text-[10px] outline-none focus:border-cyan-500 appearance-none cursor-pointer"></select>
+                                            <i data-lucide="chevron-down" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button onclick="vincularNodoSitio()" class="w-full mt-6 bg-cyan-600/20 hover:bg-cyan-600 text-cyan-400 hover:text-white border border-cyan-500/30 text-[10px] font-bold py-3 px-4 rounded-xl transition-all uppercase tracking-widest shadow-[0_0_15px_rgba(6,182,212,0.2)]">Crear Vínculo Operativo</button>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 bg-slate-950/50 border border-slate-800 rounded-xl p-4">
+                        <h4 class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-3">Mapa de Enlaces Activos</h4>
+                        <ul id="listaAsignaciones" class="text-xs text-slate-400 space-y-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            </ul>
+                    </div>
+                </div>
+
                 <div class="mt-8 flex justify-end relative z-10 border-t border-slate-800/50 pt-5">
-                    <button id="btnApply" class="bg-blue-600/90 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-xl uppercase text-[10px] tracking-[0.2em] transition-all shadow-[0_0_15px_rgba(37,99,235,0.4)] active:scale-95 flex items-center gap-3 border border-blue-400/50">
-                        <i data-lucide="save" class="w-4 h-4"></i> Guardar y Sincronizar Hardware
+                    <button id="btnApply" class="bg-blue-600/90 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-xl uppercase text-[10px] tracking-[0.2em] transition-all shadow-[0_0_15px_rgba(37,99,235,0.4)] active:scale-95 flex items-center gap-3 border border-blue-400/50 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i data-lucide="save" class="w-4 h-4"></i> Guardar Variables y Sincronizar
                     </button>
                 </div>
             </div>
-
-            <div class="glass-dark rounded-2xl shadow-xl p-6 lg:col-span-1 flex flex-col items-center">
-                <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest w-full text-center mb-6 bg-slate-800/50 py-2 rounded-lg border border-slate-700/50">Modelo Digital</h3>
-                <div class="relative w-32 h-[220px] border-x-4 border-b-4 border-slate-700 rounded-b-lg bg-slate-900 overflow-hidden shadow-[inset_0_4px_20px_rgba(0,0,0,0.8)]">
-                    <div class="absolute inset-0 z-20 flex flex-col pointer-events-none">
-                        <div id="markerSensor" class="w-full border-b-2 border-blue-400/80 absolute left-0 flex justify-start items-center" style="top: 0%;">
-                            <span class="text-[8px] font-mono font-bold text-blue-300 bg-slate-900/90 px-1.5 py-0.5 rounded border border-blue-500/30 ml-1 shadow-md" id="lblSensor">--</span>
-                        </div>
-                        <div id="markerCritico" class="w-full border-b border-red-500/80 border-dashed absolute left-0 flex justify-start items-center">
-                            <span class="text-[8px] font-mono font-bold text-red-400 bg-slate-900/90 px-1.5 py-0.5 rounded border border-red-500/30 ml-1 shadow-md" id="lblCritico">--</span>
-                        </div>
-                        <div id="markerAlerta" class="w-full border-b border-yellow-500/80 border-dashed absolute left-0 flex justify-start items-center">
-                            <span class="text-[8px] font-mono font-bold text-yellow-400 bg-slate-900/90 px-1.5 py-0.5 rounded border border-yellow-500/30 ml-1 shadow-md" id="lblAlerta">--</span>
-                        </div>
-                    </div>
-                    <div id="waterLevel" class="absolute bottom-0 left-0 w-full bg-slate-800 text-slate-800 water-fill flex flex-col items-center justify-start z-10" style="height: 0%;">
-                        <div class="absolute top-0 left-0 w-[200%] h-1.5 -translate-y-[80%] flex wave-anim text-inherit opacity-50">
-                            <svg class="w-1/2 h-full fill-current" preserveAspectRatio="none" viewBox="0 0 1200 120"><path d="M0,50 C150,150 350,-50 600,50 C850,150 1050,-50 1200,50 L1200,120 L0,120 Z"></path></svg>
-                            <svg class="w-1/2 h-full fill-current -ml-[1px]" preserveAspectRatio="none" viewBox="0 0 1200 120"><path d="M0,50 C150,150 350,-50 600,50 C850,150 1050,-50 1200,50 L1200,120 L0,120 Z"></path></svg>
-                        </div>
-                        <div class="absolute top-0 left-0 w-[200%] h-2 -translate-y-[90%] flex wave-anim-fast text-inherit">
-                            <svg class="w-1/2 h-full fill-current" preserveAspectRatio="none" viewBox="0 0 1200 120"><path d="M0,50 C150,150 350,-50 600,50 C850,150 1050,-50 1200,50 L1200,120 L0,120 Z"></path></svg>
-                            <svg class="w-1/2 h-full fill-current -ml-[1px]" preserveAspectRatio="none" viewBox="0 0 1200 120"><path d="M0,50 C150,150 350,-50 600,50 C850,150 1050,-50 1200,50 L1200,120 L0,120 Z"></path></svg>
-                        </div>
-                        <span id="waterPercent" class="text-[9px] font-mono font-bold text-white/70 tracking-widest mt-2 relative z-10"></span>
-                    </div>
-                </div>
-                <div class="mt-5 w-full flex justify-between px-2 bg-slate-900/80 py-2 rounded border border-slate-800">
-                    <p class="text-[9px] font-mono font-bold text-slate-400 uppercase" id="displayParamsL">L: --</p>
-                    <p class="text-[9px] font-mono font-bold text-slate-400 uppercase" id="displayParamsH">H: --</p>
-                </div>
-            </div>
         </div>
+
+        <footer class="mt-12 pt-6 pb-2 border-t border-slate-800/50 text-center">
+            <p class="text-[9px] font-bold text-slate-500 uppercase tracking-[0.2em]">DESARROLLADO POR : DARLEHIN RODRIGUEZ / EVELIO MENDEZ / HYDROSENTINEL AI</p>
+        </footer>
+
     </main>
 
     <script>
+        const AUTH_TOKEN = "dnDjcywHxynS29VxdBLPDMo6nF5UC14QShKq4dmc";
+        const FIREBASE_ROOT = "https://hydrosentinel-b7ad6-default-rtdb.firebaseio.com/";
+        const BOT_TOKEN = "8291136887:AAHyvw7v9hw8AvVUH5eulxNfEceLpRk0hOg";
+        const CHAT_ID = "-1003983170152";
+
+        // --- ARQUITECTURA MAESTRO-ESCLAVO (SITIO-NODO) ---
+        window.appState = {
+            sitios: {},
+            nodos: {},
+            asignaciones: {},
+            sitioActivo: null,
+            nodoActivo: null
+        };
+
+        // --- BASE DE DATOS DE USUARIOS (MULTIUSUARIO) ---
+        const USUARIOS_AUTORIZADOS = {
+            "admin": "052026",
+            "darlehin": "052026",
+            "operario": "123456" 
+        };
+        window.usuarioActivo = "Anónimo";
+        
+        window.abrirModal = function() {
+            document.getElementById('securityModal').classList.remove('hidden');
+            document.getElementById('inputUser').value = '';
+            document.getElementById('inputPin').value = '';
+            document.getElementById('inputUser').focus();
+            document.getElementById('pinError').classList.add('hidden');
+        };
+        window.cerrarModal = function() {
+            document.getElementById('securityModal').classList.add('hidden');
+        };
+        window.verificarPin = function() {
+            const userIn = document.getElementById('inputUser').value.trim().toLowerCase();
+            const pinIn = document.getElementById('inputPin').value.trim();
+            if(USUARIOS_AUTORIZADOS[userIn] && USUARIOS_AUTORIZADOS[userIn] === pinIn) {
+                window.usuarioActivo = userIn.toUpperCase();
+                cerrarModal();
+                document.getElementById('calibracionOverlay').classList.add('hidden');
+            } else {
+                document.getElementById('pinError').classList.remove('hidden');
+            }
+        };
+
+        // --- NAVEGACIÓN DE PESTAÑAS (TABS) ---
+        window.switchTab = function(tabIndex) {
+            document.getElementById('tab1_content').classList.add('hidden');
+            document.getElementById('tab2_content').classList.add('hidden');
+            document.getElementById('tab3_content').classList.add('hidden');
+            
+            document.getElementById('btnTab1').className = "px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:text-slate-300 whitespace-nowrap";
+            document.getElementById('btnTab2').className = "px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:text-slate-300 whitespace-nowrap";
+            document.getElementById('btnTab3').className = "px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:text-slate-300 whitespace-nowrap";
+            
+            if(tabIndex === 1) {
+                document.getElementById('tab1_content').classList.remove('hidden');
+                document.getElementById('btnTab1').className = "px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-blue-400 border-b-2 border-blue-500 bg-blue-500/10 whitespace-nowrap";
+                document.getElementById('btnApply').classList.remove('hidden');
+            } else if(tabIndex === 2) {
+                document.getElementById('tab2_content').classList.remove('hidden');
+                document.getElementById('btnTab2').className = "px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-blue-400 border-b-2 border-blue-500 bg-blue-500/10 whitespace-nowrap";
+                document.getElementById('btnApply').classList.add('hidden');
+            } else if(tabIndex === 3) {
+                document.getElementById('tab3_content').classList.remove('hidden');
+                document.getElementById('btnTab3').className = "px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-blue-400 border-b-2 border-blue-500 bg-blue-500/10 whitespace-nowrap";
+                document.getElementById('btnApply').classList.add('hidden');
+            }
+        };
+
+        // --- LÓGICA DE VARIABLES DINÁMICAS DE ECUACIÓN ---
+        window.actualizarCamposEcuacion = function(tipo) {
+            document.getElementById('wrap_L').classList.add('hidden');
+            document.getElementById('wrap_Parshall').classList.add('hidden');
+            document.getElementById('wrap_Parshall').classList.remove('grid');
+            document.getElementById('wrap_Manning').classList.add('hidden');
+            document.getElementById('wrap_Manning').classList.remove('grid');
+
+            if(tipo === 'rectangular' || tipo === 'cipolletti') {
+                document.getElementById('wrap_L').classList.remove('hidden');
+            } else if(tipo === 'parshall' || tipo === 'h_flume') {
+                document.getElementById('wrap_Parshall').classList.remove('hidden');
+                document.getElementById('wrap_Parshall').classList.add('grid');
+            } else if(tipo === 'manning') {
+                document.getElementById('wrap_L').classList.remove('hidden');
+                document.getElementById('wrap_Manning').classList.remove('hidden');
+                document.getElementById('wrap_Manning').classList.add('grid');
+            }
+        };
+        document.getElementById('selEcuacion')?.addEventListener('change', (e) => {
+            window.cambiarModeloTanque(e.target.value);
+            window.actualizarCamposEcuacion(e.target.value);
+        });
+
+        const getColorForEq = (eq) => {
+            if(!eq) return '#64748b'; 
+            const e = eq.toLowerCase();
+            if (e.includes('rectangular')) return '#3b82f6'; 
+            if (e.includes('parshall')) return '#22c55e';    
+            if (e.includes('manning')) return '#a855f7';     
+            if (e.includes('v-notch') || e.includes('v_notch') || e.includes('tri')) return '#eab308'; 
+            if (e.includes('cipolletti')) return '#f97316';  
+            if (e.includes('h_flume') || e.includes('h-flume')) return '#ec4899'; 
+            return '#64748b'; 
+        };
+
         window.forceScrollToEnd = true;
+        window.lastCloudCaudal = 0;
+        let anchoL = 1.0, sensorPosM = 1.8, nivelAlertaM = 1.6, nivelCriticoM = 1.8;
+        let fullDataset = []; 
+        let lastDataTime = null;
+        let unitSystem = 'standard'; 
+        let lastRawNivel = 0;
 
         window.forceNocSync = async function() {
+            if(!window.appState.nodoActivo) {
+                alert("Operación denegada. Este sitio no tiene un hardware (Nodo) vinculado.");
+                return;
+            }
             const btn = document.getElementById('btnForceSync');
             const origHTML = btn.innerHTML; 
             btn.disabled = true;
@@ -378,37 +665,38 @@
             btn.innerHTML = '<span id="syncText">⏳ ENVIANDO COMANDO...</span>';
 
             try {
-                await fetch(`${FIREBASE_BASE}${nodoActivo}/Trigger_Sync.json?auth=${AUTH_TOKEN}`, {
+                await fetch(`${FIREBASE_ROOT}nodos/${window.appState.nodoActivo}/Trigger_Sync.json?auth=${AUTH_TOKEN}`, {
                     method: 'PUT',
                     body: '1'
-                }).catch(() => { console.log("Aviso de seguridad web absorbido."); });
+                }).catch(() => { });
 
-                document.getElementById('syncText').innerText = "📡 ESPERANDO ESP32 (Max 60s)...";
+                document.getElementById('syncText').innerText = "📡 ESPERANDO ESP32 (Max 65s)...";
                 let hardwareRespondio = false;
                 let intentos = 0;
 
-                while (!hardwareRespondio && intentos < 15) { 
-                    await new Promise(r => setTimeout(r, 4000)); 
+                while (!hardwareRespondio && intentos < 13) { 
+                    await new Promise(r => setTimeout(r, 5000)); 
                     try {
-                        let res = await fetch(`${FIREBASE_BASE}${nodoActivo}/Trigger_Sync.json?auth=${AUTH_TOKEN}&t=${Date.now()}`);
+                        let res = await fetch(`${FIREBASE_ROOT}nodos/${window.appState.nodoActivo}/Trigger_Sync.json?auth=${AUTH_TOKEN}&t=${Date.now()}`);
                         let val = await res.json();
                         if (val === 0 || val === "0" || val === null) hardwareRespondio = true; 
                     } catch(e) {}
                     intentos++;
                 }
 
+                document.getElementById('syncText').innerText = "📊 ACTUALIZANDO GRÁFICAS...";
+                try { await window.sync(); } catch(err) { }
+                
                 if(hardwareRespondio) {
-                    document.getElementById('syncText').innerText = "📊 ACTUALIZANDO GRÁFICAS...";
-                    try { await window.sync(); } catch(err) { console.log("Aviso: sync() falló al dibujar.", err); }
                     btn.className = "w-full bg-emerald-500/20 text-emerald-400 text-[9px] font-bold py-2.5 rounded-lg flex items-center justify-center gap-2 border border-emerald-500/50";
                     btn.innerHTML = '<span>✔️ LECTURA EN VIVO GENERADA</span>';
                 } else {
                     btn.className = "w-full bg-yellow-500/20 text-yellow-400 text-[9px] font-bold py-2.5 rounded-lg flex items-center justify-center gap-2 border border-yellow-500/50";
-                    btn.innerHTML = '<span>⚠️ TIMEOUT: ESP32 ESTÁ OCUPADO</span>';
+                    btn.innerHTML = '<span>⚠️ RECARGA FORZADA (ESP32 IGNORÓ TRIGGER)</span>';
                 }
             } catch (error) {
                 btn.className = "w-full bg-red-600/80 text-white text-[10px] font-bold py-2.5 rounded-lg flex items-center justify-center gap-2 border border-red-500";
-                btn.innerHTML = `<span>❌ CRASH: ${error.message.substring(0, 25)}</span>`;
+                btn.innerHTML = `<span>❌ CRASH: Fallo de red</span>`;
             }
 
             setTimeout(() => {
@@ -419,33 +707,190 @@
             }, 4000);
         };
 
-        const CONFIG_NODOS = {
-            "estacion_01": {
-                nombre: "Canal Principal",
-                camara_ip: "http://192.168.1.50:81/stream", 
-                l: 1.0, h: 1.80, alerta: 1.60, critico: 1.80
-            },
-            "estacion_02": {
-                nombre: "Desarenador Secundario",
-                camara_ip: "http://192.168.1.51:81/stream",
-                l: 1.5, h: 2.00, alerta: 1.50, critico: 1.80
-            },
-            "estacion_03": {
-                nombre: "Compuerta Sur",
-                camara_ip: "http://192.168.1.52:81/stream",
-                l: 2.0, h: 1.80, alerta: 1.40, critico: 1.60
+        window.cargarDatosArquitectura = async function() {
+            try {
+                let resNodos = await fetch(`${FIREBASE_ROOT}config_global/nodos.json?auth=${AUTH_TOKEN}`);
+                window.appState.nodos = await resNodos.json() || {};
+                
+                if(Object.keys(window.appState.nodos).length === 0) {
+                    window.appState.nodos = {
+                        "estacion_01": { camara_ip: "http://192.168.1.50:81/stream" },
+                        "estacion_02": { camara_ip: "http://192.168.1.51:81/stream" },
+                        "estacion_03": { camara_ip: "http://192.168.1.52:81/stream" }
+                    };
+                }
+
+                let resSitios = await fetch(`${FIREBASE_ROOT}config_global/sitios.json?auth=${AUTH_TOKEN}`);
+                window.appState.sitios = await resSitios.json() || {};
+
+                let resAsig = await fetch(`${FIREBASE_ROOT}config_global/asignaciones.json?auth=${AUTH_TOKEN}`);
+                window.appState.asignaciones = await resAsig.json() || {};
+
+                actualizarSelectoresUI();
+            } catch(e) { console.error("Error arquitectura", e); }
+        };
+
+        window.actualizarSelectoresUI = function() {
+            const topSelector = document.getElementById('sitioSelector');
+            topSelector.innerHTML = '';
+            
+            if (Object.keys(window.appState.sitios).length === 0) {
+                topSelector.innerHTML = '<option value="">(SIN SITIOS GEOGRÁFICOS)</option>';
+            } else {
+                for (const [id, s] of Object.entries(window.appState.sitios)) {
+                    let opt = document.createElement('option');
+                    opt.value = id; opt.text = s.nombre.toUpperCase();
+                    opt.className = "bg-slate-900 text-slate-200 font-bold";
+                    topSelector.appendChild(opt);
+                }
+            }
+            
+            if (window.appState.sitioActivo && window.appState.sitios[window.appState.sitioActivo]) {
+                topSelector.value = window.appState.sitioActivo;
+            } else if (Object.keys(window.appState.sitios).length > 0) {
+                window.appState.sitioActivo = Object.keys(window.appState.sitios)[0];
+                topSelector.value = window.appState.sitioActivo;
+            } else {
+                window.appState.sitioActivo = null;
+            }
+
+            const ulSitios = document.getElementById('listaCatalogoSitios');
+            ulSitios.innerHTML = '';
+            for (const [id, s] of Object.entries(window.appState.sitios)) {
+                ulSitios.innerHTML += `<li class="py-2 border-b border-slate-800 flex items-center justify-between"><div class="flex items-center gap-2"><i data-lucide="map-pin" class="w-3 h-3 text-emerald-500"></i> <span class="font-bold text-slate-300 uppercase">${s.nombre}</span></div> <span class="text-[9px] text-slate-500 font-mono">ID: ${id}</span></li>`;
+            }
+
+            const selNodo = document.getElementById('selVincularNodo');
+            const selSitio = document.getElementById('selVincularSitio');
+            selNodo.innerHTML = ''; selSitio.innerHTML = '';
+            
+            for (const [id, n] of Object.entries(window.appState.nodos)) {
+                selNodo.innerHTML += `<option value="${id}">${id.toUpperCase()}</option>`;
+            }
+            for (const [id, s] of Object.entries(window.appState.sitios)) {
+                selSitio.innerHTML += `<option value="${id}">${s.nombre.toUpperCase()}</option>`;
+            }
+
+            const ulAsig = document.getElementById('listaAsignaciones');
+            ulAsig.innerHTML = '';
+            for (const [sitioId, nodoId] of Object.entries(window.appState.asignaciones)) {
+                const nomSitio = window.appState.sitios[sitioId] ? window.appState.sitios[sitioId].nombre : sitioId;
+                ulAsig.innerHTML += `<li class="p-3 bg-slate-900 rounded-lg border border-slate-700/50 flex flex-col"><span class="text-[9px] font-bold text-cyan-400 uppercase tracking-widest mb-1"><i data-lucide="map" class="inline w-3 h-3"></i> ${nomSitio}</span><span class="text-[10px] text-slate-300 font-mono pl-4 border-l-2 border-slate-600 ml-1"><i data-lucide="cpu" class="inline w-3 h-3 text-slate-500"></i> NODO: ${nodoId}</span></li>`;
+            }
+
+            if(window.lucide) window.lucide.createIcons();
+        };
+
+        window.guardarNuevoSitio = async function() {
+            const nombre = document.getElementById('inputNuevoSitio').value.trim();
+            if(!nombre) return;
+            const id = nombre.toLowerCase().trim().replace(/[^a-z0-9]/g, '_');
+            
+            try {
+                await fetch(`${FIREBASE_ROOT}config_global/sitios/${id}.json?auth=${AUTH_TOKEN}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ id, nombre })
+                });
+                document.getElementById('inputNuevoSitio').value = '';
+                await cargarDatosArquitectura();
+                if(Object.keys(window.appState.sitios).length === 1) seleccionarSitioActivo(id);
+            } catch(e) { console.error("Error creando sitio", e); }
+        };
+
+        window.guardarNuevoNodo = async function() {
+            const id = document.getElementById('inputNuevoNodoID').value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+            const cam = document.getElementById('inputNuevoNodoCam').value.trim();
+            if(!id) return;
+            
+            try {
+                await fetch(`${FIREBASE_ROOT}config_global/nodos/${id}.json?auth=${AUTH_TOKEN}`, {
+                    method: 'PUT', body: JSON.stringify({ camara_ip: cam })
+                });
+                document.getElementById('inputNuevoNodoID').value = '';
+                document.getElementById('inputNuevoNodoCam').value = '';
+                await cargarDatosArquitectura();
+            } catch(e) {}
+        };
+
+        window.vincularNodoSitio = async function() {
+            const nodoId = document.getElementById('selVincularNodo').value;
+            const sitioId = document.getElementById('selVincularSitio').value;
+            if(!nodoId || !sitioId) return;
+
+            try {
+                await fetch(`${FIREBASE_ROOT}config_global/asignaciones/${sitioId}.json?auth=${AUTH_TOKEN}`, {
+                    method: 'PUT', body: JSON.stringify(nodoId)
+                });
+                await fetch(`${FIREBASE_ROOT}nodos/${nodoId}/config_shadow/sitio.json?auth=${AUTH_TOKEN}`, {
+                    method: 'PUT', body: JSON.stringify(sitioId)
+                });
+
+                await cargarDatosArquitectura();
+                if(window.appState.sitioActivo === sitioId) {
+                    seleccionarSitioActivo(sitioId);
+                }
+            } catch(e) {}
+        };
+
+        window.seleccionarSitioActivo = function(sitioId) {
+            window.appState.sitioActivo = sitioId;
+            window.appState.nodoActivo = window.appState.asignaciones[sitioId] || null;
+            
+            if (!window.appState.nodoActivo) {
+                updateOfflineUI("SITIO SIN HARDWARE", "Vaya a 'Asignación Nodos' para vincular una placa.");
+                document.getElementById('lblNodoEstado').innerText = "DESVINCULADO";
+                document.getElementById('lblVideoNodo').innerText = "NO CAM";
+                document.getElementById('lblTablaNodo').innerText = "SIN ASIGNAR";
+                document.getElementById('videoPlaceholder').classList.remove('hidden');
+                document.getElementById('ipCameraFeed').classList.add('hidden');
+                
+                window.currentChartData = [];
+                window.advancedChart.data.labels = []; window.advancedChart.data.datasets[0].data = []; window.advancedChart.update();
+                document.getElementById('tablaReportes').innerHTML = '';
+                
+                const btnSave = document.getElementById('btnApply');
+                btnSave.disabled = true;
+                btnSave.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                const btnSave = document.getElementById('btnApply');
+                btnSave.disabled = false;
+                btnSave.classList.remove('opacity-50', 'cursor-not-allowed');
+                cargarConfiguracionNodo().then(window.sync);
             }
         };
 
-        const AUTH_TOKEN = "dnDjcywHxynS29VxdBLPDMo6nF5UC14QShKq4dmc";
-        const FIREBASE_BASE = "https://hydrosentinel-b7ad6-default-rtdb.firebaseio.com/nodos/"; 
-        
-        let nodoActivo = Object.keys(CONFIG_NODOS)[0]; 
-        let anchoL, sensorPosM, nivelAlertaM, nivelCriticoM;
-        let fullDataset = []; 
-        let lastDataTime = null;
-        let unitSystem = 'standard'; 
-        let lastRawNivel = 0; 
+        document.getElementById('sitioSelector').addEventListener('change', (e) => {
+            window.seleccionarSitioActivo(e.target.value);
+        });
+
+        document.getElementById('histPeriod').addEventListener('change', (e) => {
+            const val = e.target.value;
+            const dateRange = document.getElementById('customDateRange');
+            if (val === 'custom' || val === 'specific_day') {
+                dateRange.classList.remove('hidden');
+                dateRange.classList.add('flex');
+                if(val === 'specific_day') {
+                    document.getElementById('dateEnd').classList.add('hidden');
+                    document.getElementById('lblAl').classList.add('hidden');
+                } else {
+                    document.getElementById('dateEnd').classList.remove('hidden');
+                    document.getElementById('lblAl').classList.remove('hidden');
+                }
+            } else {
+                dateRange.classList.add('hidden');
+                dateRange.classList.remove('flex');
+                renderData(); 
+            }
+        });
+
+        // TAREA 4: GATILLO DEL FILTRO MÉTRICA
+        document.getElementById('histMetric').addEventListener('change', () => {
+            renderData();
+        });
+
+        document.getElementById('btnApplyFilter').addEventListener('click', () => {
+            renderData();
+        });
 
         function getFirebaseTimestamp(id) {
             if (!id || id.length < 8 || !id.startsWith('-')) return Date.now();
@@ -463,10 +908,10 @@
             if(rawData.startsWith("ESTADO:")) {
                 const file = new Blob([rawData.replace(/\\n/g, '\n')], {type: 'text/plain'});
                 link.href = URL.createObjectURL(file);
-                link.download = `Reporte_Tactico_${nodoActivo}_${new Date().getTime()}.txt`;
+                link.download = `Reporte_Tactico_${window.appState.nodoActivo}_${new Date().getTime()}.txt`;
             } else {
                 link.href = rawData.startsWith("data:image") ? rawData : "data:image/jpeg;base64," + rawData;
-                link.download = `Evidencia_${nodoActivo}_${new Date().getTime()}.jpg`;
+                link.download = `Evidencia_${window.appState.nodoActivo}_${new Date().getTime()}.jpg`;
             }
             document.body.appendChild(link);
             link.click();
@@ -518,20 +963,17 @@
             const currentPeriod = document.getElementById('histPeriod').value;
             const btnFilter = document.getElementById('btnApplyFilter');
             
-            // Si el período actual NO es specific_day y NO es today (aplica para custom, 1m, 7d), saltamos
-            if (currentPeriod !== 'specific_day' && currentPeriod !== 'today') {
+            if (currentPeriod !== 'specific_day' && currentPeriod !== 'today' && currentPeriod !== 'all') {
                 const fecha = new Date(timestamp);
                 const dateStr = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}-${String(fecha.getDate()).padStart(2, '0')}`;
                 
-                // Forzar UI al nuevo filtro "Día Específico"
                 const histPeriod = document.getElementById('histPeriod');
                 histPeriod.value = "specific_day";
-                histPeriod.dispatchEvent(new Event('change')); // Dispara evento para ocultar fecha 'fin'
+                histPeriod.dispatchEvent(new Event('change')); 
                 
                 document.getElementById('dateStart').value = dateStr;
                 btnFilter.click();
 
-                // Damos un margen de tiempo ligeramente mayor para permitir que la animación se procese
                 setTimeout(() => {
                     window.highlightChartPoint(timestamp);
                 }, 300);
@@ -541,7 +983,6 @@
             document.getElementById('seccionGrafica').scrollIntoView({ behavior: 'smooth', block: 'start' });
         };
 
-        // EVENTO: IR AL PICO MÁXIMO
         window.irAlPicoMaximo = function() {
             if (!window.currentChartData || window.currentChartData.length === 0) return;
             let maxVal = -1;
@@ -557,14 +998,6 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
-            const selectNodo = document.getElementById('nodoSelector');
-            for (const [id, data] of Object.entries(CONFIG_NODOS)) {
-                let option = document.createElement('option');
-                option.value = id;
-                option.text = `${data.nombre} (${id})`;
-                option.className = "bg-slate-900 text-slate-200 font-bold";
-                selectNodo.appendChild(option);
-            }
 
             document.getElementById('unitSelector').addEventListener('change', (e) => {
                 unitSystem = e.target.value;
@@ -583,9 +1016,10 @@
             Chart.defaults.color = '#94a3b8';
             Chart.defaults.font.family = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace';
             const ctxY = document.getElementById('yAxisChart')?.getContext('2d');
-            let yAxisChart = new Chart(ctxY, {
+            
+            window.yAxisChartInstance = new Chart(ctxY, {
                 type: 'line',
-                data: { labels: [], datasets: [{ data: [], borderColor: 'transparent', pointRadius: 0, fill: false }] },
+                data: { labels: [''], datasets: [{ data: [0, 100], borderColor: 'transparent', pointRadius: 0, fill: false }] },
                 options: { 
                     responsive: true, maintainAspectRatio: false, animation: false,
                     layout: { padding: { top: 30, bottom: 0, left: 0, right: 20 } },
@@ -594,12 +1028,12 @@
                     scales: { 
                         x: { 
                             grid: { display: false, drawBorder: false }, 
-                            ticks: { font: { size: 10 }, color: 'transparent', maxRotation: 0 } 
+                            ticks: { display: false } 
                         }, 
                         y: { 
                             position: 'right', 
                             grid: { display: false, drawBorder: false }, 
-                            ticks: { font: { size: 10, weight: 'bold' }, color: '#38bdf8', padding: 5, crossAlign: 'near', stepSize: 20 } 
+                            ticks: { font: { size: 10, weight: 'bold' }, color: '#38bdf8', padding: 5, crossAlign: 'near' } 
                         } 
                     }
                 }
@@ -608,7 +1042,31 @@
             const ctxHist = document.getElementById('advancedHistoricalChart')?.getContext('2d');
             window.advancedChart = new Chart(ctxHist, {
                 type: 'line',
-                data: { labels: [], datasets: [{ label: 'Valor Registro', data: [], borderColor: '#38bdf8', backgroundColor: 'rgba(56, 189, 248, 0.1)', borderWidth: 2, pointBackgroundColor: '#0284c7', pointBorderColor: '#38bdf8', pointRadius: 2, fill: true }] },
+                data: { 
+                    labels: [], 
+                    datasets: [{ 
+                        label: 'Valor Registro', 
+                        data: [], 
+                        segment: {
+                            borderColor: ctx => {
+                                if (!window.currentChartData) return '#38bdf8';
+                                const p1 = window.currentChartData[ctx.p1DataIndex];
+                                return getColorForEq(p1 ? p1.ecuacion : null);
+                            }
+                        },
+                        backgroundColor: 'rgba(56, 189, 248, 0.05)', 
+                        borderWidth: 2, 
+                        pointBackgroundColor: ctx => {
+                            if (!window.currentChartData) return '#0284c7';
+                            const p = window.currentChartData[ctx.dataIndex];
+                            return getColorForEq(p ? p.ecuacion : null);
+                        }, 
+                        pointBorderColor: '#ffffff', 
+                        pointRadius: 3, 
+                        pointHoverRadius: 5, 
+                        fill: true 
+                    }] 
+                },
                 options: { 
                     responsive: true, maintainAspectRatio: false,
                     elements: { line: { tension: 0 } }, 
@@ -629,9 +1087,10 @@
                                     if (!window.currentChartData) return '';
                                     const dataPoint = window.currentChartData[context.dataIndex];
                                     if (!dataPoint) return '';
-                                    if (dataPoint.max >= nivelCriticoM * 100) return ' ESTADO: PELIGRO CRÍTICO 🔴';
-                                    if (dataPoint.max >= nivelAlertaM * 100) return ' ESTADO: ALERTA PREVENTIVA 🟡';
-                                    return ' ESTADO: ESTABLE 🟢';
+                                    const ecText = dataPoint.ecuacion ? ` | Fór: ${dataPoint.ecuacion.toUpperCase()}` : ' | Fór: N/A';
+                                    if (dataPoint.max >= nivelCriticoM * 100) return ' ESTADO: PELIGRO CRÍTICO 🔴' + ecText;
+                                    if (dataPoint.max >= nivelAlertaM * 100) return ' ESTADO: ALERTA PREVENTIVA 🟡' + ecText;
+                                    return ' ESTADO: ESTABLE 🟢' + ecText;
                                 }
                             }
                         } 
@@ -645,37 +1104,85 @@
                         y: { 
                             position: 'right', 
                             grid: { color: 'rgba(51, 65, 85, 0.4)', drawBorder: false }, 
-                            ticks: { display: false, stepSize: 20 } 
+                            ticks: { display: false } 
                         } 
                     }
                 }
             });
 
-            async function cargarConfiguracionNodo() {
-                const cfg = CONFIG_NODOS[nodoActivo];
-                try {
-                    const resCfg = await fetch(`${FIREBASE_BASE}${nodoActivo}/calibracion.json?auth=${AUTH_TOKEN}`);
-                    const dataCfg = await resCfg.json();
-                    if(dataCfg) {
-                        cfg.l = parseFloat(dataCfg.l) || cfg.l;
-                        cfg.h = parseFloat(dataCfg.h) || cfg.h;
-                        cfg.alerta = parseFloat(dataCfg.alerta) || cfg.alerta;
-                        cfg.critico = parseFloat(dataCfg.critico) || cfg.critico;
+            window.cambiarModeloTanque = function(tipo) {
+                const tanque = document.getElementById('tanqueContenedor');
+                if(!tanque) return;
+                if(tipo === 'v_notch') {
+                    tanque.style.clipPath = "polygon(0 0, 100% 0, 100% 70%, 50% 100%, 0 70%)";
+                    tanque.style.borderRadius = "0";
+                } else if(tipo === 'parshall' || tipo === 'manning' || tipo === 'cipolletti') {
+                    tanque.style.clipPath = "polygon(0 0, 100% 0, 85% 100%, 15% 100%)";
+                    tanque.style.borderRadius = "0";
+                } else {
+                    tanque.style.clipPath = "none";
+                    tanque.style.borderRadius = "0 0 0.25rem 0.25rem"; 
+                }
+            };
+
+            cargarDatosArquitectura().then(() => {
+                if(window.appState.sitioActivo) {
+                    seleccionarSitioActivo(window.appState.sitioActivo);
+                } else {
+                    seleccionarSitioActivo(null);
+                }
+                setInterval(() => { if(window.appState.nodoActivo) window.sync(); }, 15000);
+            });
+        });
+
+        async function cargarConfiguracionNodo() {
+            if(!window.appState.nodoActivo) return;
+            const nId = window.appState.nodoActivo;
+            
+            try {
+                const resCfg = await fetch(`${FIREBASE_ROOT}nodos/${nId}/config_shadow.json?auth=${AUTH_TOKEN}`);
+                const dataCfg = await resCfg.json();
+                
+                if(dataCfg) {
+                    anchoL = parseFloat(dataCfg.parametros?.p_l) || parseFloat(dataCfg.l) || 1.0;
+                    sensorPosM = parseFloat(dataCfg.h) || 1.8;
+                    nivelAlertaM = parseFloat(dataCfg.alerta) || 1.6;
+                    nivelCriticoM = parseFloat(dataCfg.critico) || 1.8;
+                    
+                    if(dataCfg.parametros) {
+                        if(dataCfg.parametros.k) document.getElementById('inputParshallK').value = dataCfg.parametros.k;
+                        if(dataCfg.parametros.n_exp) document.getElementById('inputParshallN').value = dataCfg.parametros.n_exp;
+                        if(dataCfg.parametros.n) document.getElementById('inputManningN').value = dataCfg.parametros.n;
+                        if(dataCfg.parametros.s) document.getElementById('inputManningS').value = dataCfg.parametros.s;
                     }
-                } catch(e) { console.log("Cargando calibración por defecto."); }
 
-                document.getElementById('inputAnchoL').value = cfg.l;
-                document.getElementById('inputSensorPos').value = cfg.h;
-                document.getElementById('inputAlerta').value = cfg.alerta;
-                document.getElementById('inputCritico').value = cfg.critico;
-                document.getElementById('lblNodoEstado').innerText = cfg.nombre;
-                document.getElementById('lblVideoNodo').innerText = cfg.nombre;
-                document.getElementById('lblTablaNodo').innerText = cfg.nombre;
+                    if(dataCfg.tipo && document.getElementById('selEcuacion')) {
+                        document.getElementById('selEcuacion').value = dataCfg.tipo;
+                        window.cambiarModeloTanque(dataCfg.tipo);
+                        window.actualizarCamposEcuacion(dataCfg.tipo);
+                    }
+                }
 
+                document.getElementById('inputAnchoL').value = anchoL;
+                document.getElementById('inputSensorPos').value = sensorPosM;
+                document.getElementById('inputAlerta').value = nivelAlertaM;
+                document.getElementById('inputCritico').value = nivelCriticoM;
+
+                const nombreSitio = window.appState.sitios[window.appState.sitioActivo]?.nombre || "SITIO ACTIVO";
+                document.getElementById('lblNodoEstado').innerText = nombreSitio.toUpperCase();
+                document.getElementById('lblVideoNodo').innerText = nombreSitio.toUpperCase();
+                document.getElementById('lblTablaNodo').innerText = nombreSitio.toUpperCase();
+
+                const camIp = window.appState.nodos[nId]?.camara_ip || "";
                 const imgFeed = document.getElementById('ipCameraFeed');
-                imgFeed.src = cfg.camara_ip;
-                imgFeed.classList.remove('hidden');
-                document.getElementById('videoPlaceholder').classList.add('hidden');
+                if(camIp) {
+                    imgFeed.src = camIp;
+                    imgFeed.classList.remove('hidden');
+                    document.getElementById('videoPlaceholder').classList.add('hidden');
+                } else {
+                    imgFeed.classList.add('hidden');
+                    document.getElementById('videoPlaceholder').classList.remove('hidden');
+                }
                 
                 fullDataset = [];
                 lastDataTime = null;
@@ -689,384 +1196,398 @@
 
                 window.forceScrollToEnd = true;
                 renderData(); 
-                updateOfflineUI("CARGANDO NODO", "Sincronizando con satélite...");
-            }
+                updateOfflineUI("CARGANDO ENLACE", `Conectando con ${nId}...`);
+            } catch(e) { console.error("Error cargando calibración", e); }
+        }
 
-            window.sync = async function() {
-                anchoL = parseFloat(document.getElementById('inputAnchoL').value) || 1.0;
-                sensorPosM = parseFloat(document.getElementById('inputSensorPos').value) || 1.80;
-                nivelAlertaM = parseFloat(document.getElementById('inputAlerta').value) || 1.60;
-                nivelCriticoM = parseFloat(document.getElementById('inputCritico').value) || 1.80;
+        window.sync = async function() {
+            if(!window.appState.nodoActivo) return;
+            const nId = window.appState.nodoActivo;
+            const sId = window.appState.sitioActivo;
 
-                let conexionActiva = false;
+            anchoL = parseFloat(document.getElementById('inputAnchoL').value) || 1.0;
+            sensorPosM = parseFloat(document.getElementById('inputSensorPos').value) || 1.80;
+            nivelAlertaM = parseFloat(document.getElementById('inputAlerta').value) || 1.60;
+            nivelCriticoM = parseFloat(document.getElementById('inputCritico').value) || 1.80;
 
-                try {
-                    const resActual = await fetch(`${FIREBASE_BASE}${nodoActivo}/actual.json?auth=${AUTH_TOKEN}&nocache=${new Date().getTime()}`);
-                    if (resActual.ok) {
-                        const dataActual = await resActual.json();
-                        if (dataActual !== null) {
-                            lastRawNivel = dataActual.nivel || 0;
-                            updateRealtimeUI(lastRawNivel);
-                            conexionActiva = true;
-                        }
-                    }
-                } catch (e) {}
+            let conexionActiva = false;
 
-                try {
-                    const period = document.getElementById('histPeriod').value;
-                    let monthsToFetch = [];
-                    const now = new Date();
-
-                    if (period === 'today' || period === '1m' || period === '7d') {
-                        monthsToFetch.push(`${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}`);
-                        if (period !== 'today') {
-                            const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-                            monthsToFetch.push(`${prev.getFullYear()}/${String(prev.getMonth() + 1).padStart(2, '0')}`);
-                        }
-                    } else if (period === 'custom' || period === 'specific_day') {
-                        const dsParts = document.getElementById('dateStart').value.split('-');
-                        let deParts = document.getElementById('dateEnd').value.split('-');
-
-                        if (period === 'specific_day') {
-                            deParts = dsParts;
+            try {
+                const resActual = await fetch(`${FIREBASE_ROOT}nodos/${nId}/telemetria_cloud.json?auth=${AUTH_TOKEN}&nocache=${Date.now()}`);
+                if (resActual.ok) {
+                    const dataActual = await resActual.json();
+                    if (dataActual !== null) {
+                        let dNivel = dataActual.nivel_m !== undefined ? (parseFloat(dataActual.nivel_m) * 100) : 0;
+                        let dCaudal = dataActual.caudal_m3s !== undefined ? parseFloat(dataActual.caudal_m3s) : 0;
+                        
+                        lastRawNivel = isNaN(dNivel) ? 0 : dNivel;
+                        window.lastCloudCaudal = isNaN(dCaudal) ? 0 : dCaudal;
+                        updateRealtimeUI(lastRawNivel);
+                        
+                        if(dataActual.timestamp) {
+                            document.getElementById('lastSync').innerText = new Date(dataActual.timestamp).toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
                         }
                         
-                        let ds = new Date(dsParts[0], dsParts[1] - 1, dsParts[2]);
-                        let de = new Date(deParts[0], deParts[1] - 1, deParts[2]);
-                        
-                        let curr = new Date(ds.getFullYear(), ds.getMonth(), 1);
-                        while (curr <= de) {
-                            monthsToFetch.push(`${curr.getFullYear()}/${String(curr.getMonth() + 1).padStart(2, '0')}`);
-                            curr.setMonth(curr.getMonth() + 1);
-                        }
-                    }
-
-                    const fetchPromises = monthsToFetch.map(m => 
-                        fetch(`${FIREBASE_BASE}${nodoActivo}/historial/${m}.json?auth=${AUTH_TOKEN}&nocache=${Date.now()}`)
-                        .then(r => r.json())
-                    );
-
-                    const results = await Promise.all(fetchPromises);
-                    let mergedData = [];
-                    results.forEach(monthObj => {
-                        if (monthObj) {
-                            Object.entries(monthObj).forEach(([id, val]) => {
-                                mergedData.push({
-                                    id,
-                                    nivel: parseFloat(val.nivel) || 0,
-                                    timestamp: val.timestamp || getFirebaseTimestamp(id)
-                                });
-                            });
-                        }
-                    });
-
-                    fullDataset = mergedData.sort((a,b) => a.timestamp - b.timestamp);
-                    if (fullDataset.length > 0) {
-                        lastDataTime = fullDataset[fullDataset.length - 1].timestamp;
                         conexionActiva = true;
                     }
-                    renderData();
-                } catch (e) { console.error("Fallo lectura particionada", e); }
+                }
+            } catch (e) { console.error("Error Actual:", e); }
 
-                try {
-                    const evRes = await fetch(`${FIREBASE_BASE}${nodoActivo}/evidencia.json?auth=${AUTH_TOKEN}&nocache=${Date.now()}`);
-                    if (evRes.ok) {
-                        const evData = await evRes.json();
-                        if(evData && evData.last_photo) {
-                            const rawData = evData.last_photo;
-                            if(rawData.startsWith("ESTADO:")) {
-                                document.getElementById('evidenceImage').classList.add('hidden');
-                                document.getElementById('evidenceTextContainer').classList.remove('hidden');
-                                document.getElementById('evidenceTextContent').innerHTML = rawData.replace(/\\n/g, '<br>');
-                            } else {
-                                document.getElementById('evidenceTextContainer').classList.add('hidden');
-                                const img = document.getElementById('evidenceImage');
-                                img.src = rawData.startsWith("data:image") ? rawData : "data:image/jpeg;base64," + rawData;
-                                img.classList.remove('hidden');
-                            }
-                            document.getElementById('evidencePlaceholder').classList.add('hidden');
-                            document.getElementById('evidenceData').classList.remove('hidden');
-                            document.getElementById('evidenceDate').innerText = new Date().toLocaleString();
-                            document.getElementById('btnDownloadEvidence').disabled = false;
-                            document.getElementById('btnDownloadEvidence').setAttribute('data-raw', rawData);
+            try {
+                const resHist = await fetch(`${FIREBASE_ROOT}nodos/${nId}/historial/${sId}.json?auth=${AUTH_TOKEN}&nocache=${Date.now()}`);
+                const siteData = await resHist.json();
+                
+                let mergedData = [];
+
+                function flattenData(node, parentKey) {
+                    if (!node || typeof node !== 'object') return;
+                    
+                    if (node.nivel !== undefined || node.nivel_m !== undefined || node.caudal !== undefined || node.caudal_m3s !== undefined) {
+                        let record = { ...node };
+                        record.id = record.id || parentKey;
+                        
+                        let ts = record.timestamp;
+                        if (ts && ts < 20000000000) ts = ts * 1000;
+                        record.timestamp = ts || getFirebaseTimestamp(record.id);
+
+                        record.nivel = node.nivel_m !== undefined ? (parseFloat(node.nivel_m) * 100) : (parseFloat(node.nivel) || 0);
+                        record.caudal = node.caudal_m3s !== undefined ? parseFloat(node.caudal_m3s) : (parseFloat(node.caudal) || 0);
+                        record.ecuacion = record.meta_ecuacion || record.ecuacion || "N/A";
+                        
+                        mergedData.push(record);
+                    } else {
+                        for (let key in node) { 
+                            flattenData(node[key], key); 
                         }
                     }
-                } catch (e) {}
-
-                if (conexionActiva) {
-                    document.getElementById('connectionStatus').innerText = "ENLACE NOC ACTIVO";
-                    document.getElementById('statusDot').className = "w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]";
-                    document.getElementById('syncProgress').className = "bg-blue-500 h-full w-full animate-pulse";
-                } else {
-                    updateOfflineUI("ESPERANDO DATOS", "Verificando enlace físico...");
                 }
-            }
 
-            function updateRealtimeUI(nivelCm) {
-                const valNivel = isNaN(parseFloat(nivelCm)) ? 0 : parseFloat(nivelCm);
-                const nivelM = valNivel / 100.0;
-                const isStd = unitSystem === 'standard';
-                const valNivelDisplay = isStd ? valNivel : nivelM;
-                let q = (nivelM <= 0) ? 0 : 1.45 * anchoL * Math.pow(nivelM, 1.5);
-                const qDisplay = isStd ? q : (q * 1000);
-                document.getElementById('currentLevel').innerText = isStd ? valNivelDisplay.toFixed(0) : valNivelDisplay.toFixed(2);
-                document.getElementById('currentFlow').innerText = isStd ? qDisplay.toFixed(3) : qDisplay.toFixed(1);
-                document.getElementById('lastSync').innerText = lastDataTime ? new Date(lastDataTime).toLocaleTimeString() : new Date().toLocaleTimeString();
+                flattenData(siteData, sId);
+
+                const unicos = {};
+                mergedData.forEach(d => { if(d.id && d.timestamp) unicos[d.id] = d; });
+                fullDataset = Object.values(unicos).sort((a,b) => a.timestamp - b.timestamp);
                 
-                let porc = Math.min(100, Math.max(0, (nivelM / sensorPosM) * 100));
-                document.getElementById('waterLevel').style.height = `${porc > 0 ? Math.max(0, porc - 1.5) : 0}%`;
-                document.getElementById('waterPercent').innerText = porc.toFixed(1) + '%';
-                document.getElementById('lblSensor').innerText = `${sensorPosM.toFixed(2)}m (S)`;
-                document.getElementById('markerCritico').style.top = `${Math.max(0, ((sensorPosM - nivelCriticoM) / sensorPosM) * 100)}%`;
-                document.getElementById('markerAlerta').style.top = `${Math.max(0, ((sensorPosM - nivelAlertaM) / sensorPosM) * 100)}%`;
-                document.getElementById('lblCritico').innerText = `${nivelCriticoM.toFixed(2)}m (C)`;
-                document.getElementById('lblAlerta').innerText = `${nivelAlertaM.toFixed(2)}m (A)`;
-                document.getElementById('displayParamsL').innerText = `L: ${anchoL.toFixed(1)}m`;
-                document.getElementById('displayParamsH').innerText = `H: ${sensorPosM.toFixed(1)}m`;
-
-                const water = document.getElementById('waterLevel');
-                const stTitle = document.getElementById('systemStatus');
-                const stIcon = document.getElementById('statusIcon');
-                const stDesc = document.getElementById('statusDesc');
-
-                const lvlEl = document.getElementById('currentLevel');
-                const flowEl = document.getElementById('currentFlow');
-                flowEl.className = "text-5xl font-black text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.6)] transition-all duration-500";
-
-                if (valNivel <= 0) {
-                    water.className = "absolute bottom-0 left-0 w-full bg-slate-800/80 text-slate-800/80 water-fill flex flex-col items-center justify-start z-10";
-                    stTitle.innerText = "ESPERANDO FLUJO"; stDesc.innerText = "Canal en nivel cero (0 cm)";
-                    stIcon.className = "p-3 bg-slate-500/20 border border-slate-500/40 rounded-xl text-slate-400";
-                    stIcon.innerHTML = '<i data-lucide="droplets"></i>';
-                    lvlEl.className = "text-5xl font-black text-slate-500 drop-shadow-[0_0_15px_rgba(100,116,139,0.5)] transition-all duration-500";
-                } else if (nivelM >= nivelCriticoM) {
-                    water.className = "absolute bottom-0 left-0 w-full bg-red-600/90 text-red-600/90 water-fill flex flex-col items-center justify-start z-10 shadow-[0_-5px_25px_rgba(220,38,38,0.6)]";
-                    stTitle.innerText = "PELIGRO CRÍTICO"; stDesc.innerText = "Desbordamiento inminente en nodo";
-                    stIcon.className = "p-3 bg-red-500/20 border border-red-500/40 rounded-xl text-red-400 animate-pulse";
-                    stIcon.innerHTML = '<i data-lucide="alert-triangle"></i>';
-                    lvlEl.className = "text-5xl font-black text-red-500 drop-shadow-[0_0_15px_rgba(239,68,68,0.8)] transition-all duration-500";
-                } else if (nivelM >= nivelAlertaM) {
-                    water.className = "absolute bottom-0 left-0 w-full bg-yellow-500/90 text-yellow-500/90 water-fill flex flex-col items-center justify-start z-10 shadow-[0_-5px_25px_rgba(234,179,8,0.4)]";
-                    stTitle.innerText = "ALERTA OPERATIVA"; stDesc.innerText = "Nivel en observación técnica";
-                    stIcon.className = "p-3 bg-yellow-500/20 border border-yellow-500/40 rounded-xl text-yellow-400";
-                    stIcon.innerHTML = '<i data-lucide="alert-circle"></i>';
-                    lvlEl.className = "text-5xl font-black text-yellow-400 drop-shadow-[0_0_15px_rgba(250,204,21,0.8)] transition-all duration-500";
-                } else {
-                    water.className = "absolute bottom-0 left-0 w-full bg-blue-500/80 text-blue-500/80 water-fill flex flex-col items-center justify-start z-10 shadow-[0_-5px_25px_rgba(59,130,246,0.3)]";
-                    stTitle.innerText = "ESTADO ESTABLE"; stDesc.innerText = "Condiciones de flujo normal";
-                    stIcon.className = "p-3 bg-emerald-500/20 border border-emerald-500/40 rounded-xl text-emerald-400";
-                    stIcon.innerHTML = '<i data-lucide="check-circle"></i>';
-                    lvlEl.className = "text-5xl font-black text-blue-500 drop-shadow-[0_0_15px_rgba(59,130,246,0.8)] transition-all duration-500";
+                if (fullDataset.length > 0) {
+                    lastDataTime = fullDataset[fullDataset.length - 1].timestamp;
+                    conexionActiva = true;
                 }
-                lucide.createIcons();
-            }
+                
+                renderData();
+            } catch (e) { console.error("Fallo lectura historial:", e); }
 
-            function updateOfflineUI(titulo, desc) {
-                document.getElementById('systemStatus').innerText = titulo;
-                document.getElementById('statusDesc').innerText = desc;
-                document.getElementById('statusIcon').innerHTML = '<i data-lucide="satellite" class="w-8 h-8 animate-pulse"></i>';
-                document.getElementById('currentLevel').innerText = "--";
-                document.getElementById('currentFlow').innerText = "--";
-                document.getElementById('waterLevel').style.height = "0%";
-                document.getElementById('connectionStatus').innerText = "ESPERANDO TELEMETRÍA";
-                document.getElementById('statusDot').className = "w-2.5 h-2.5 rounded-full bg-slate-500 animate-pulse";
-                document.getElementById('currentLevel').className = "text-5xl font-black text-slate-700 transition-colors duration-500 drop-shadow-lg";
-                document.getElementById('currentFlow').className = "text-5xl font-black text-slate-700 transition-colors duration-500 drop-shadow-lg";
-                lucide.createIcons();
-            }
-
-            function renderData() {
-                const period = document.getElementById('histPeriod').value;
-                const metric = document.getElementById('histMetric').value;
-                let filtered = [...fullDataset];
-                let intervalMs = 60 * 1000; 
-                const isStd = unitSystem === 'standard';
-                const uNivel = isStd ? 'cm' : 'm';
-                const uCaudal = isStd ? 'm³/s' : 'L/s';
-                const fNivel = isStd ? 1 : 100;
-                const fCaudal = isStd ? 1 : 1000;
-                const decNivel = isStd ? 1 : 2;
-                const decCaudal = isStd ? 3 : 1;
-
-                if (period === 'today') {
-                    filtered = fullDataset.filter(d => d.timestamp >= new Date().setHours(0,0,0,0));
-                    intervalMs = 1; 
-                } else if (period === '7d') {
-                    filtered = fullDataset.filter(d => d.timestamp >= Date.now() - (7 * 24 * 60 * 60 * 1000));
-                    intervalMs = 60 * 1000 * 15; 
-                } else if (period === '1m') {
-                    filtered = fullDataset.filter(d => d.timestamp >= Date.now() - (30 * 24 * 60 * 60 * 1000));
-                    intervalMs = 60 * 1000 * 60; 
-                } else if (period === 'custom' || period === 'specific_day') {
-                    // AJUSTE DE ZONA HORARIA LOCAL EN FILTRO PERSONALIZADO
-                    const dsParts = document.getElementById('dateStart').value.split('-');
-                    let deParts = document.getElementById('dateEnd').value.split('-');
-
-                    if (period === 'specific_day') {
-                        deParts = dsParts;
-                    }
-                    
-                    if(dsParts.length === 3 && deParts.length === 3) {
-                        const ds = new Date(dsParts[0], dsParts[1] - 1, dsParts[2]).getTime();
-                        const de = new Date(deParts[0], deParts[1] - 1, deParts[2], 23, 59, 59, 999).getTime();
-                        
-                        filtered = fullDataset.filter(d => d.timestamp >= ds && d.timestamp <= de);
-                        intervalMs = (de - ds <= 86400000) ? 1 : 3600000;
+            try {
+                const evRes = await fetch(`${FIREBASE_ROOT}nodos/${nId}/evidencia.json?auth=${AUTH_TOKEN}&nocache=${Date.now()}`);
+                if (evRes.ok) {
+                    const evData = await evRes.json();
+                    if(evData && evData.last_photo) {
+                        const rawData = evData.last_photo;
+                        if(rawData.startsWith("ESTADO:")) {
+                            document.getElementById('evidenceImage').classList.add('hidden');
+                            document.getElementById('evidenceTextContainer').classList.remove('hidden');
+                            document.getElementById('evidenceTextContent').innerHTML = rawData.replace(/\\n/g, '<br>');
+                        } else {
+                            document.getElementById('evidenceTextContainer').classList.add('hidden');
+                            const img = document.getElementById('evidenceImage');
+                            img.src = rawData.startsWith("data:image") ? rawData : "data:image/jpeg;base64," + rawData;
+                            img.classList.remove('hidden');
+                        }
+                        document.getElementById('evidencePlaceholder').classList.add('hidden');
+                        document.getElementById('evidenceData').classList.remove('hidden');
+                        document.getElementById('evidenceDate').innerText = new Date().toLocaleString();
+                        document.getElementById('btnDownloadEvidence').disabled = false;
+                        document.getElementById('btnDownloadEvidence').setAttribute('data-raw', rawData);
                     }
                 }
+            } catch (e) {}
 
-                const groups = {};
-                let sumTotal = 0, maxTotal = 0;
-                filtered.forEach(d => {
-                    const bucket = Math.floor(d.timestamp / intervalMs) * intervalMs;
-                    if (!groups[bucket]) groups[bucket] = { levels: [], timestamp: bucket };
-                    groups[bucket].levels.push(d.nivel);
-                    sumTotal += d.nivel; if (d.nivel > maxTotal) maxTotal = d.nivel;
-                });
+            if (conexionActiva) {
+                document.getElementById('connectionStatus').innerText = "ENLACE NOC ACTIVO";
+                document.getElementById('statusDot').className = "w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]";
+            } else {
+                updateOfflineUI("ESPERANDO DATOS", "Verificando enlace físico...");
+            }
+        }
 
-                const aggregated = Object.values(groups).map(g => {
-                    const avg = g.levels.reduce((a,b) => a+b, 0) / g.levels.length;
-                    const last = g.levels[g.levels.length - 1]; 
-                    const max = Math.max(...g.levels); 
-                    const q = 1.45 * anchoL * Math.pow(max/100, 1.5); 
-                    return { timestamp: g.timestamp, avg, last, max, caudal: isNaN(q) ? 0 : q };
-                });
+        function renderData() {
+            const period = document.getElementById('histPeriod').value;
+            const metric = document.getElementById('histMetric').value;
+            let filtered = [...fullDataset];
+            const now = Date.now();
 
-                if (filtered.length > 0) {
-                    const avgTotal = sumTotal / filtered.length;
-                    document.getElementById('lblAvgNivel').innerText = `${(avgTotal / fNivel).toFixed(decNivel)} ${uNivel}`;
-                    document.getElementById('lblMaxPico').innerText = `${(maxTotal / fNivel).toFixed(decNivel)} ${uNivel}`;
-                    const flowTotal = 1.45 * anchoL * Math.pow(avgTotal / 100, 1.5);
-                    document.getElementById('lblAvgCaudal').innerText = `${isNaN(flowTotal) ? '0.000' : (flowTotal * fCaudal).toFixed(decCaudal)} ${uCaudal}`;
+            if (period === 'today') {
+                const startOfDay = new Date().setHours(0,0,0,0);
+                filtered = filtered.filter(d => d.timestamp >= startOfDay);
+            } else if (period === '7d') {
+                filtered = filtered.filter(d => d.timestamp >= now - 7*24*60*60*1000);
+            } else if (period === '1m') {
+                filtered = filtered.filter(d => d.timestamp >= now - 30*24*60*60*1000);
+            } else if (period === 'specific_day') {
+                const day = document.getElementById('dateStart').value;
+                if (day) {
+                    const start = new Date(day + 'T00:00:00').getTime();
+                    const end = start + 24*60*60*1000;
+                    filtered = filtered.filter(d => d.timestamp >= start && d.timestamp < end);
                 }
-
-                const labelsArray = aggregated.map(d => {
-                    const dateObj = new Date(d.timestamp);
-                    if (intervalMs === 1) {
-                        return dateObj.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
-                    }
-                    return intervalMs < 86400000 ? dateObj.toLocaleDateString('es-ES', {day:'2-digit', month:'short'}) + ' ' + dateObj.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'}) : dateObj.toLocaleDateString('es-ES', {day:'2-digit', month:'short'});
-                });
-                
-                const dataArray = aggregated.map(d => (metric === 'nivel' ? (d.max / fNivel).toFixed(decNivel) : (d.caudal * fCaudal).toFixed(decCaudal)));
-
-                if (dataArray.length > 0) {
-                    const numericData = dataArray.map(Number);
-                    const buffer = (metric === 'nivel') ? (isStd ? 20 : 0.20) : (Math.max(...numericData) - Math.min(...numericData)) * 0.2 || 1;
-                    const yMin = Math.max(0, Math.min(...numericData) - buffer);
-                    const yMax = Math.max(...numericData) + buffer;
-                    window.advancedChart.options.scales.y.min = yMin; window.advancedChart.options.scales.y.max = yMax;
-                    yAxisChart.options.scales.y.min = yMin; yAxisChart.options.scales.y.max = yMax;
+            } else if (period === 'custom') {
+                const dStart = document.getElementById('dateStart').value;
+                const dEnd = document.getElementById('dateEnd').value;
+                if (dStart && dEnd) {
+                    const start = new Date(dStart + 'T00:00:00').getTime();
+                    const end = new Date(dEnd + 'T23:59:59').getTime();
+                    filtered = filtered.filter(d => d.timestamp >= start && d.timestamp <= end);
                 }
-
-                window.currentChartData = aggregated;
-                window.advancedChart.data.labels = labelsArray; window.advancedChart.data.datasets[0].data = dataArray;
-                yAxisChart.data.labels = labelsArray; yAxisChart.data.datasets[0].data = dataArray;
-                
-                const wrapper = document.getElementById('chartWrapper');
-                document.getElementById('chartScrollArea').style.width = Math.max(wrapper ? wrapper.clientWidth : 0, aggregated.length * (intervalMs < 86400000 ? 15 : 40)) + 'px';
-                window.advancedChart.update(); yAxisChart.update();
-
-                document.getElementById('tablaReportes').innerHTML = [...aggregated].reverse().map(d => {
-                    const limitCritCm = nivelCriticoM * 100;
-                    const limitAlertCm = nivelAlertaM * 100;
-                    
-                    let badge = d.max >= limitCritCm ? '<span class="px-2.5 py-1 rounded-sm text-[9px] font-bold tracking-widest uppercase bg-red-500/20 text-red-400 border border-red-500/30">CRÍTICO</span>' : (d.max >= limitAlertCm ? '<span class="px-2.5 py-1 rounded-sm text-[9px] font-bold tracking-widest uppercase bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">ALERTA</span>' : '<span class="px-2.5 py-1 rounded-sm text-[9px] font-bold tracking-widest uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">ESTABLE</span>');
-                    
-                    return `<tr id="row-${d.timestamp}" class="hover:bg-slate-800/60 transition-colors cursor-pointer group" onclick="verLecturaExacta(${d.timestamp})">
-                        <td class="px-6 py-4 font-mono text-slate-400">${new Date(d.timestamp).toLocaleString('es-ES')}</td>
-                        <td class="px-6 py-4 text-center font-bold text-slate-300">${(d.last / fNivel).toFixed(decNivel)} ${uNivel}</td>
-                        <td class="px-6 py-4 text-center font-black text-white">${(d.max / fNivel).toFixed(decNivel)} ${uNivel}</td>
-                        <td class="px-6 py-4 text-center font-mono font-bold text-cyan-400">${(d.caudal * fCaudal).toFixed(decCaudal)}</td>
-                        <td class="px-6 py-4">${badge}</td>
-                        <td class="px-6 py-4 text-center"><span class="bg-blue-500/10 text-blue-400 px-3 py-1.5 rounded-lg border border-blue-500/30 text-[9px] font-bold uppercase tracking-wider group-hover:bg-blue-500 group-hover:text-white transition-all">Ver Lectura <i data-lucide="crosshair" class="inline w-3 h-3 ml-1"></i></span></td>
-                    </tr>`;
-                }).join('');
-                lucide.createIcons();
             }
 
-            document.getElementById('nodoSelector').addEventListener('change', (e) => { nodoActivo = e.target.value; cargarConfiguracionNodo().then(window.sync); });
+            let intervalMs = 1; 
+            const isStd = unitSystem === 'standard';
+            const uNivel = isStd ? 'cm' : 'm';
+            const fNivel = isStd ? 1 : 100;
+            const fCaudal = isStd ? 1 : 1000;
+            const decNivel = isStd ? 1 : 2;
+            const decCaudal = isStd ? 3 : 1;
+
+            const groups = {};
+            let sumTotal = 0, maxTotal = 0, sumCaudalTotal = 0;
             
-            document.getElementById('btnApplyFilter').addEventListener('click', () => { 
-                const btn = document.getElementById('btnApplyFilter');
-                const origText = btn.innerHTML;
-                const origClass = btn.className;
-                
-                btn.innerHTML = '<i data-lucide="loader-2" class="w-3 h-3 inline animate-spin mr-1"></i>...';
-                if(window.lucide) window.lucide.createIcons();
-                
-                setTimeout(() => {
-                    window.forceScrollToEnd = true; 
-                    renderData(); 
-                    
-                    btn.innerHTML = '<i data-lucide="check" class="w-3 h-3 inline mr-1"></i>Aplicado';
-                    btn.className = "bg-emerald-500/90 text-white px-4 py-1.5 rounded-lg text-[10px] font-bold hover:bg-emerald-400 border border-emerald-500/50 shadow-[0_0_10px_rgba(16,185,129,0.3)] transition-all";
-                    if(window.lucide) window.lucide.createIcons();
-                    
-                    setTimeout(() => {
-                        btn.innerHTML = origText;
-                        btn.className = origClass;
-                    }, 1500);
-                }, 50);
+            filtered.forEach(d => {
+                const bucket = Math.floor(d.timestamp / intervalMs) * intervalMs;
+                if (!groups[bucket]) groups[bucket] = { levels: [], flows: [], timestamp: bucket, ecuacion: d.ecuacion };
+                groups[bucket].levels.push(d.nivel);
+                groups[bucket].flows.push(d.caudal); 
+                sumTotal += d.nivel;
+                sumCaudalTotal += d.caudal;
+                if (d.nivel > maxTotal) maxTotal = d.nivel;
             });
 
-            document.getElementById('histPeriod').addEventListener('change', (e) => { 
-                const customDateRange = document.getElementById('customDateRange');
-                const dateEnd = document.getElementById('dateEnd');
-                const lblAl = document.getElementById('lblAl');
-
-                if (e.target.value === 'custom') { 
-                    customDateRange.classList.remove('hidden'); 
-                    dateEnd.classList.remove('hidden');
-                    lblAl.classList.remove('hidden');
-                } else if (e.target.value === 'specific_day') {
-                    customDateRange.classList.remove('hidden'); 
-                    dateEnd.classList.add('hidden');
-                    lblAl.classList.add('hidden');
-                } else { 
-                    customDateRange.classList.add('hidden'); 
-                    window.forceScrollToEnd = true; 
-                    window.sync(); 
-                } 
+            const aggregated = Object.values(groups).map(g => {
+                const avg = g.levels.reduce((a,b) => a+b, 0) / g.levels.length;
+                const last = g.levels[g.levels.length - 1]; 
+                const max = Math.max(...g.levels); 
+                const maxCaudal = Math.max(...g.flows); 
+                return { timestamp: g.timestamp, avg, last, max, caudal: maxCaudal, ecuacion: g.ecuacion };
             });
 
-            document.getElementById('histMetric').addEventListener('change', renderData);
-            document.getElementById('btnApply').addEventListener('click', async () => {
-                const btn = document.getElementById('btnApply');
-                const origHTML = btn.innerHTML;
-                const origClass = btn.className;
-                btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> ENVIANDO...';
-                
-                const configJSON = JSON.stringify({
-                    l: parseFloat(document.getElementById('inputAnchoL').value), 
-                    h: parseFloat(document.getElementById('inputSensorPos').value), 
-                    alerta: parseFloat(document.getElementById('inputAlerta').value), 
-                    critico: parseFloat(document.getElementById('inputCritico').value)
-                });
-                
-                try {
-                    await fetch(`${FIREBASE_BASE}${nodoActivo}/calibracion.json?auth=${AUTH_TOKEN}`, { method: 'PUT', body: configJSON });
-                    sync();
-                    
-                    btn.innerHTML = '<i data-lucide="check-circle" class="w-4 h-4"></i> CONFIGURACIÓN EXITOSA';
-                    btn.className = "bg-emerald-500 text-white font-bold py-3 px-8 rounded-xl uppercase text-[10px] tracking-[0.2em] shadow-[0_0_15px_rgba(16,185,129,0.5)] flex items-center gap-3 transition-all";
-                    lucide.createIcons();
-                } catch (e) { 
-                    console.error("Fallo SCADA: ", e); 
-                    btn.innerHTML = '<i data-lucide="x-circle" class="w-4 h-4"></i> ERROR DE RED';
-                    btn.className = "bg-red-500 text-white font-bold py-3 px-8 rounded-xl uppercase text-[10px] tracking-[0.2em] flex items-center gap-3 transition-all";
-                    lucide.createIcons();
+            const scrollArea = document.getElementById('chartScrollArea');
+            if (aggregated.length > 30) {
+                scrollArea.style.minWidth = (aggregated.length * 40) + 'px'; 
+            } else {
+                scrollArea.style.minWidth = '100%';
+            }
+
+            if (filtered.length > 0) {
+                const avgTotal = sumTotal / filtered.length;
+                document.getElementById('lblAvgNivel').innerText = `${(avgTotal / fNivel).toFixed(decNivel)} ${uNivel}`;
+                document.getElementById('lblMaxPico').innerText = `${(maxTotal / fNivel).toFixed(decNivel)} ${uNivel}`;
+                const flowTotal = sumCaudalTotal / filtered.length;
+                document.getElementById('lblAvgCaudal').innerText = `${(flowTotal * fCaudal).toFixed(decCaudal)} ${isStd ? 'm³/s' : 'L/s'}`;
+            } else {
+                document.getElementById('lblAvgNivel').innerText = `-- ${uNivel}`;
+                document.getElementById('lblMaxPico').innerText = `-- ${uNivel}`;
+                document.getElementById('lblAvgCaudal').innerText = `-- ${isStd ? 'm³/s' : 'L/s'}`;
+            }
+
+            // TAREA 3: FILTRO DE FECHAS EN EL EJE X
+            const labelsArray = aggregated.map(d => {
+                const dateObj = new Date(d.timestamp);
+                if (period === 'today') {
+                    return dateObj.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'});
+                } else {
+                    return dateObj.toLocaleDateString('es-ES', {day:'2-digit', month:'2-digit'}) + ' ' + dateObj.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'});
                 }
-                
-                setTimeout(() => { 
-                    btn.innerHTML = origHTML; 
-                    btn.className = origClass; 
-                    lucide.createIcons(); 
-                }, 3000);
             });
 
-            cargarConfiguracionNodo().then(() => { window.sync(); setInterval(window.sync, 15000); });
+            const dataArray = aggregated.map(d => (metric === 'nivel' ? (d.max / fNivel).toFixed(decNivel) : (d.caudal * fCaudal).toFixed(decCaudal)));
+
+            // TAREA 2: ALGORITMO +- 20% EN EL EJE Y
+            const dataNum = dataArray.map(Number).filter(n => !isNaN(n));
+            let maxDataVal = dataNum.length > 0 ? Math.max(...dataNum) : 10;
+            let minDataVal = dataNum.length > 0 ? Math.min(...dataNum) : 0;
+            
+            if(maxDataVal === minDataVal) {
+                maxDataVal = maxDataVal + (maxDataVal * 0.1);
+                minDataVal = Math.max(0, minDataVal - (minDataVal * 0.1));
+            }
+            
+            let calcMax = maxDataVal + (maxDataVal * 0.20);
+            let calcMin = minDataVal - (minDataVal * 0.20);
+            if(calcMin < 0) calcMin = 0; 
+
+            window.currentChartData = aggregated;
+            window.advancedChart.data.labels = labelsArray; 
+            window.advancedChart.data.datasets[0].data = dataArray;
+            window.advancedChart.options.scales.y.max = calcMax;
+            window.advancedChart.options.scales.y.min = calcMin;
+            window.advancedChart.update();
+
+            if(window.yAxisChartInstance) {
+                window.yAxisChartInstance.options.scales.y.max = calcMax;
+                window.yAxisChartInstance.options.scales.y.min = calcMin;
+                window.yAxisChartInstance.data.datasets[0].data = [calcMin, calcMax];
+                window.yAxisChartInstance.update();
+            }
+
+            document.getElementById('tablaReportes').innerHTML = [...aggregated].reverse().map(d => {
+                const limitCritCm = nivelCriticoM * 100;
+                const limitAlertCm = nivelAlertaM * 100;
+                let badge = d.max >= limitCritCm ? '<span class="px-2.5 py-1 rounded-sm text-[9px] font-bold tracking-widest uppercase bg-red-500/20 text-red-400 border border-red-500/30">CRÍTICO</span>' : (d.max >= limitAlertCm ? '<span class="px-2.5 py-1 rounded-sm text-[9px] font-bold tracking-widest uppercase bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">ALERTA</span>' : '<span class="px-2.5 py-1 rounded-sm text-[9px] font-bold tracking-widest uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">ESTABLE</span>');
+                return `<tr id="row-${d.timestamp}" class="hover:bg-slate-800/60 transition-colors cursor-pointer group" onclick="verLecturaExacta(${d.timestamp})">
+                    <td class="px-6 py-4 font-mono text-slate-400">${new Date(d.timestamp).toLocaleString('es-ES')}</td>
+                    <td class="px-6 py-4 text-center font-bold text-slate-300">${(d.last / fNivel).toFixed(decNivel)} ${uNivel}</td>
+                    <td class="px-6 py-4 text-center font-black text-white">${(d.max / fNivel).toFixed(decNivel)} ${uNivel}</td>
+                    <td class="px-6 py-4 text-center font-mono font-bold text-cyan-400">${(d.caudal * fCaudal).toFixed(decCaudal)}</td>
+                    <td class="px-6 py-4 text-center text-[10px] text-slate-500 font-bold">${d.ecuacion ? d.ecuacion.toUpperCase() : 'N/A'}</td>
+                    <td class="px-6 py-4">${badge}</td>
+                    <td class="px-6 py-4 text-center"><span class="bg-blue-500/10 text-blue-400 px-3 py-1.5 rounded-lg border border-blue-500/30 text-[9px] font-bold">Ver Lectura</span></td>
+                </tr>`;
+            }).join('');
+            lucide.createIcons();
+
+            setTimeout(() => {
+                const wrapper = document.getElementById('chartWrapper');
+                if(wrapper) {
+                    wrapper.scrollTo({ left: wrapper.scrollWidth, behavior: 'smooth' });
+                }
+            }, 100);
+        }
+
+        function updateRealtimeUI(nivelCm) {
+            const valNivel = isNaN(parseFloat(nivelCm)) ? 0 : parseFloat(nivelCm);
+            const nivelM = valNivel / 100.0;
+            const isStd = unitSystem === 'standard';
+            
+            const elNivel = document.getElementById('currentLevel');
+            const elCaudal = document.getElementById('currentFlow');
+            
+            elNivel.innerText = isStd ? valNivel.toFixed(0) : nivelM.toFixed(2);
+            elCaudal.innerText = isStd ? window.lastCloudCaudal.toFixed(3) : (window.lastCloudCaudal * 1000).toFixed(1);
+            
+            document.getElementById('lblSensor').innerText = sensorPosM.toFixed(2) + 'm';
+            document.getElementById('lblCritico').innerText = nivelCriticoM.toFixed(2) + 'm';
+            document.getElementById('lblAlerta').innerText = nivelAlertaM.toFixed(2) + 'm';
+
+            let pCrit = Math.min(100, Math.max(0, (1 - (nivelCriticoM / sensorPosM)) * 100));
+            let pAlert = Math.min(100, Math.max(0, (1 - (nivelAlertaM / sensorPosM)) * 100));
+            document.getElementById('markerCritico').style.top = pCrit + '%';
+            document.getElementById('markerAlerta').style.top = pAlert + '%';
+
+            let porc = Math.min(100, Math.max(0, (nivelM / sensorPosM) * 100));
+            const waterEl = document.getElementById('waterLevel');
+            waterEl.style.height = `${porc}%`;
+            document.getElementById('waterPercent').innerText = porc.toFixed(1) + '%';
+
+            // TAREA 1: COLOR DINÁMICO DEL AGUA EN EL TANQUE
+            if (valNivel <= 0) {
+                waterEl.className = "absolute bottom-0 left-0 w-full bg-slate-800 text-slate-800 water-fill flex flex-col items-center justify-start z-10";
+            } else if (nivelM >= nivelCriticoM) {
+                waterEl.className = "absolute bottom-0 left-0 w-full bg-red-500/80 text-red-500 water-fill flex flex-col items-center justify-start z-10";
+            } else if (nivelM >= nivelAlertaM) {
+                waterEl.className = "absolute bottom-0 left-0 w-full bg-yellow-500/80 text-yellow-500 water-fill flex flex-col items-center justify-start z-10";
+            } else {
+                waterEl.className = "absolute bottom-0 left-0 w-full bg-blue-500/80 text-blue-500 water-fill flex flex-col items-center justify-start z-10";
+            }
+
+            const stTitle = document.getElementById('systemStatus');
+            const stDesc = document.getElementById('statusDesc');
+            const stIcon = document.getElementById('statusIcon');
+
+            stIcon.className = "p-3 rounded-xl border transition-colors duration-500 self-start";
+
+            if (valNivel <= 0) {
+                stTitle.innerText = "ESPERANDO FLUJO"; stDesc.innerText = "Canal en nivel cero";
+                stIcon.innerHTML = '<i data-lucide="droplets"></i>';
+                stIcon.classList.add('bg-slate-800/50', 'text-slate-500', 'border-slate-700/50');
+                elNivel.className = "text-6xl font-black text-slate-600 transition-colors duration-500 drop-shadow-lg";
+                elCaudal.className = "text-5xl font-black text-slate-600 transition-colors duration-500 drop-shadow-lg";
+            } else if (nivelM >= nivelCriticoM) {
+                stTitle.innerText = "PELIGRO CRÍTICO"; stDesc.innerText = "Desbordamiento inminente";
+                stIcon.innerHTML = '<i data-lucide="alert-triangle"></i>';
+                stIcon.classList.add('bg-red-500/20', 'text-red-500', 'border-red-500/50', 'shadow-[0_0_15px_rgba(239,68,68,0.4)]');
+                elNivel.className = "text-6xl font-black text-red-500 transition-colors duration-500 drop-shadow-[0_0_15px_rgba(239,68,68,0.6)]";
+                elCaudal.className = "text-5xl font-black text-cyan-400 transition-colors duration-500 drop-shadow-[0_0_15px_rgba(34,211,238,0.6)]";
+            } else if (nivelM >= nivelAlertaM) {
+                stTitle.innerText = "ALERTA OPERATIVA"; stDesc.innerText = "Nivel en observación";
+                stIcon.innerHTML = '<i data-lucide="alert-circle"></i>';
+                stIcon.classList.add('bg-yellow-500/20', 'text-yellow-500', 'border-yellow-500/50', 'shadow-[0_0_15px_rgba(234,179,8,0.4)]');
+                elNivel.className = "text-6xl font-black text-yellow-500 transition-colors duration-500 drop-shadow-[0_0_15px_rgba(234,179,8,0.6)]";
+                elCaudal.className = "text-5xl font-black text-cyan-400 transition-colors duration-500 drop-shadow-[0_0_15px_rgba(34,211,238,0.6)]";
+            } else {
+                stTitle.innerText = "ESTADO ESTABLE"; stDesc.innerText = "Condiciones de flujo normal";
+                stIcon.innerHTML = '<i data-lucide="check-circle"></i>';
+                stIcon.classList.add('bg-emerald-500/20', 'text-emerald-500', 'border-emerald-500/50', 'shadow-[0_0_15px_rgba(16,185,129,0.4)]');
+                elNivel.className = "text-6xl font-black text-blue-500 transition-colors duration-500 drop-shadow-[0_0_15px_rgba(59,130,246,0.6)]";
+                elCaudal.className = "text-5xl font-black text-cyan-400 transition-colors duration-500 drop-shadow-[0_0_15px_rgba(34,211,238,0.6)]";
+            }
+            lucide.createIcons();
+        }
+
+        function updateOfflineUI(t, d) {
+            document.getElementById('systemStatus').innerText = t;
+            document.getElementById('statusDesc').innerText = d;
+        }
+
+        document.getElementById('btnApply').addEventListener('click', async () => {
+            const btn = document.getElementById('btnApply');
+            btn.innerHTML = '<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> Guardando...';
+            btn.disabled = true;
+
+            try {
+                const nId = window.appState.nodoActivo;
+                const nomSitio = window.appState.sitios[window.appState.sitioActivo]?.nombre || "SITIO ACTIVO";
+                const ecuacionVal = document.getElementById('selEcuacion').value;
+                const l_val = parseFloat(document.getElementById('inputAnchoL').value);
+                const h_val = parseFloat(document.getElementById('inputSensorPos').value);
+                const alerta_val = parseFloat(document.getElementById('inputAlerta').value);
+                const critico_val = parseFloat(document.getElementById('inputCritico').value);
+
+                const configShadow = {
+                    sitio: window.appState.sitioActivo,
+                    tipo: ecuacionVal,
+                    l: l_val,
+                    h: h_val,
+                    alerta: alerta_val,
+                    critico: critico_val
+                };
+
+                const params = {};
+                if(ecuacionVal === 'parshall' || ecuacionVal === 'h_flume') {
+                    params.k = parseFloat(document.getElementById('inputParshallK').value);
+                    params.n_exp = parseFloat(document.getElementById('inputParshallN').value);
+                } else if(ecuacionVal === 'manning') {
+                    params.n = parseFloat(document.getElementById('inputManningN').value);
+                    params.s = parseFloat(document.getElementById('inputManningS').value);
+                }
+                if(Object.keys(params).length > 0) configShadow.parametros = params;
+
+                await fetch(`${FIREBASE_ROOT}nodos/${nId}/config_shadow.json?auth=${AUTH_TOKEN}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(configShadow)
+                });
+
+                const msgAudit = `🔐 *AUDITORÍA NOC v6.0*\nEl usuario *${window.usuarioActivo}* modificó calibración.\n📍 *Sitio:* ${nomSitio.toUpperCase()}\n⚙️ *Ec:* ${ecuacionVal}\n📐 *L:* ${l_val}m | *H:* ${h_val}m\n⚠️ *Alertas:* ${alerta_val}m (A) / ${critico_val}m (C)`;
+                fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(msgAudit)}&parse_mode=Markdown`).catch(()=>{});
+
+                document.getElementById('calibracionOverlay').classList.remove('hidden');
+
+                cargarConfiguracionNodo().then(window.sync);
+                
+                btn.innerHTML = '<i data-lucide="check-circle" class="w-4 h-4"></i> CONFIGURACIÓN EXITOSA';
+                btn.className = "bg-emerald-500 text-white font-bold py-3 px-8 rounded-xl uppercase text-[10px] tracking-[0.2em] shadow-[0_0_15px_rgba(16,185,129,0.5)] flex items-center gap-3 transition-all";
+                lucide.createIcons();
+            } catch (e) { 
+                btn.innerHTML = '<i data-lucide="x-circle" class="w-4 h-4"></i> ERROR DE RED';
+                btn.className = "bg-red-500 text-white font-bold py-3 px-8 rounded-xl uppercase text-[10px] tracking-[0.2em] shadow-[0_0_15px_rgba(239,68,68,0.5)] flex items-center gap-3 transition-all";
+                lucide.createIcons();
+            }
+
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.className = "bg-blue-600/90 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-xl uppercase text-[10px] tracking-[0.2em] transition-all shadow-[0_0_15px_rgba(37,99,235,0.4)] active:scale-95 flex items-center gap-3 border border-blue-400/50";
+                btn.innerHTML = '<i data-lucide="save" class="w-4 h-4"></i> Guardar Variables y Sincronizar';
+                lucide.createIcons();
+            }, 3000);
         });
+
     </script>
 </body>
 </html>
