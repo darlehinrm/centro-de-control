@@ -539,10 +539,11 @@
 
     </main>
 
+    <script src="env.js"></script>
     <script>
         const AUTH_TOKEN = "dnDjcywHxynS29VxdBLPDMo6nF5UC14QShKq4dmc";
         const FIREBASE_ROOT = "https://hydrosentinel-b7ad6-default-rtdb.firebaseio.com/";
-        const BOT_TOKEN = "8291136887:AAHyvw7v9hw8AvVUH5eulxNfEceLpRk0hOg";
+        const BOT_TOKEN = window.SECRETO_TELEGRAM; // Ahora lee la llave desde el archivo oculto
         const CHAT_ID = "-1003983170152";
 
         // --- ARQUITECTURA MAESTRO-ESCLAVO (SITIO-NODO) ---
