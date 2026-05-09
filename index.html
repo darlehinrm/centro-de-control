@@ -205,12 +205,13 @@
                     <i data-lucide="bar-chart-2" class="w-4 h-4 text-blue-500"></i> Tendencia Analítica del Sitio
                 </h3>
                 <div class="flex flex-wrap items-center gap-3 bg-slate-900/80 p-2 rounded-xl border border-slate-800 shadow-inner">
+                    
+                    <!-- MODIFICACIÓN 1: Eliminada la opción 'all' -->
                     <select id="histPeriod" class="bg-slate-950 border border-slate-700 text-slate-300 text-[10px] font-bold rounded-lg px-3 py-2 cursor-pointer outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors">
                         <option value="today">Hoy (Lecturas al Minuto)</option>
                         <option value="specific_day">Día Específico 📅</option>
                         <option value="7d">Últimos 7 Días</option>
                         <option value="1m" selected>Último Mes (30 Días)</option>
-                        <option value="all" class="text-blue-400">Todo el Historial (Sin Filtro)</option>
                         <option value="custom">Rango Personalizado 📅</option>
                     </select>
 
@@ -380,73 +381,116 @@
                 </div>
 
                 <div id="tab1_content" class="flex-grow block relative z-10">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-                        <div>
-                            <label class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-2">Ecuación Nube</label>
-                            <div class="relative">
-                                <select id="selEcuacion" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-3 text-white text-[10px] font-mono font-bold outline-none focus:border-blue-500 focus:shadow-[0_0_10px_rgba(59,130,246,0.3)] transition-all appearance-none cursor-pointer">
-                                    <option value="rectangular">Rectangular</option>
-                                    <option value="v_notch">V-Notch (Tri.)</option>
-                                    <option value="parshall">Parshall</option>
-                                    <option value="manning">Manning</option>
-                                    <option value="cipolletti">Cipolletti</option>
-                                    <option value="h_flume">H-Flume</option>
-                                </select>
-                                <i data-lucide="chevron-down" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none"></i>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-2">Límite Alerta</label>
-                            <div class="relative">
-                                <input type="number" id="inputAlerta" value="1.6" step="0.01" class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-4 pr-8 py-3 text-yellow-400 font-mono font-bold outline-none focus:border-yellow-500 transition-all">
-                                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-bold">m</span>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-2">Límite Crítico</label>
-                            <div class="relative">
-                                <input type="number" id="inputCritico" value="1.8" step="0.01" class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-4 pr-8 py-3 text-red-400 font-mono font-bold outline-none focus:border-red-500 transition-all">
-                                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-bold">m</span>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-2">Ubicación Sensor (h)</label>
-                            <div class="relative">
-                                <input type="number" id="inputSensorPos" value="1.8" step="0.01" class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-4 pr-8 py-3 text-white font-mono font-bold outline-none focus:border-blue-500 transition-all">
-                                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-bold">m</span>
-                            </div>
-                        </div>
+                    
+                    <!-- CAMPOS OCULTOS DE LEGACY (Para evitar fallos de código original) -->
+                    <div style="display:none;">
+                        <select id="selEcuacion"></select>
+                        <input type="number" id="inputParshallK">
+                        <input type="number" id="inputParshallN">
+                    </div>
 
-                        <div class="col-span-1 md:col-span-2 lg:col-span-4 p-4 bg-slate-900/50 border border-slate-700/50 rounded-xl mt-2">
-                            <h4 class="text-[9px] font-bold text-blue-400 uppercase tracking-widest mb-4 border-b border-slate-700/50 pb-2">Variables Matemáticas Requeridas</h4>
+                    <!-- NUEVO PANEL SCADA (Usando IDs exactos del original donde corresponde) -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <div class="space-y-6">
+                            <h4 class="text-[9px] font-black text-blue-400 bg-blue-400/10 px-3 py-1.5 rounded border-l-2 border-blue-500 uppercase">Configuración de Estructura</h4>
                             
-                            <div id="wrap_L" class="block w-full md:w-1/4">
-                                <label class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-2">Ancho Canal (L)</label>
+                            <div class="space-y-4">
+                                <label class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest">Modo Operativo</label>
                                 <div class="relative">
-                                    <input type="number" id="inputAnchoL" value="1.0" step="0.1" class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-4 pr-8 py-2 text-white font-mono font-bold outline-none focus:border-blue-500 transition-all">
-                                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-bold">m</span>
+                                    <select id="selModoOp" onchange="togglePanels(); actualizarFormaTanque();" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white text-[10px] font-bold outline-none focus:border-blue-500 appearance-none cursor-pointer">
+                                        <option value="solo_canal">SOLO CANAL (MANNING)</option>
+                                        <option value="solo_vertedero">SOLO VERTEDERO (WEIR LOGIC)</option>
+                                        <option value="combinado">SISTEMA COMBINADO (CANAL + VERTEDERO)</option>
+                                    </select>
+                                    <i data-lucide="chevron-down" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none"></i>
                                 </div>
                             </div>
 
-                            <div id="wrap_Parshall" class="hidden grid-cols-1 md:grid-cols-2 gap-4 w-full md:w-1/2">
-                                <div>
-                                    <label class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-2">Coeficiente (k)</label>
-                                    <input type="number" id="inputParshallK" value="1.0" step="0.01" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-white font-mono font-bold outline-none focus:border-blue-500 transition-all">
+                            <div id="panel_canal" class="space-y-4 transition-opacity duration-300">
+                                <label class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest">Geometría del Canal</label>
+                                <div class="relative">
+                                    <select id="selGeoCanal" onchange="actualizarFormaTanque();" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white text-[10px] font-bold outline-none focus:border-blue-500 appearance-none cursor-pointer">
+                                        <option value="rectangular">SECCIÓN RECTANGULAR</option>
+                                        <option value="trapezoidal">SECCIÓN TRAPEZOIDAL</option>
+                                        <option value="circular">SECCIÓN CIRCULAR (TUBERÍA)</option>
+                                        <option value="triangular">SECCIÓN TRIANGULAR</option>
+                                    </select>
+                                    <i data-lucide="chevron-down" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none"></i>
                                 </div>
-                                <div>
-                                    <label class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-2">Exponente (n_exp)</label>
-                                    <input type="number" id="inputParshallN" value="1.5" step="0.01" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-white font-mono font-bold outline-none focus:border-blue-500 transition-all">
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div class="relative">
+                                        <label class="text-[7px] text-slate-500 font-bold ml-1 uppercase tracking-widest">Base (b) m</label>
+                                        <!-- Original ID usado aquí para compatibilidad -->
+                                        <input type="number" id="inputAnchoL" step="0.01" value="1.0" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono text-xs outline-none focus:border-blue-500">
+                                    </div>
+                                    <div class="relative">
+                                        <label class="text-[7px] text-slate-500 font-bold ml-1 uppercase tracking-widest">Talud (z)</label>
+                                        <input type="number" id="inputCanalZ" step="0.01" value="0.0" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono text-xs outline-none focus:border-blue-500">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-6">
+                            <h4 class="text-[9px] font-black text-emerald-400 bg-emerald-400/10 px-3 py-1.5 rounded border-l-2 border-emerald-500 uppercase">Variables Hidráulicas</h4>
+                            
+                            <div id="panel_manning" class="grid grid-cols-2 gap-3 transition-opacity duration-300">
+                                <div class="relative">
+                                    <label class="text-[7px] text-slate-500 font-bold ml-1 uppercase tracking-widest">Rugosidad (n)</label>
+                                    <!-- Original ID -->
+                                    <input type="number" id="inputManningN" step="0.001" value="0.013" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-emerald-400 font-mono text-xs outline-none focus:border-emerald-500">
+                                </div>
+                                <div class="relative">
+                                    <label class="text-[7px] text-slate-500 font-bold ml-1 uppercase tracking-widest">Pendiente (S)</label>
+                                    <!-- Original ID -->
+                                    <input type="number" id="inputManningS" step="0.0001" value="0.001" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-emerald-400 font-mono text-xs outline-none focus:border-emerald-500">
                                 </div>
                             </div>
 
-                            <div id="wrap_Manning" class="hidden grid-cols-1 md:grid-cols-2 gap-4 w-full md:w-1/2 mt-4">
+                            <div id="panel_vertedero" class="space-y-4 pt-4 border-t border-slate-800 transition-opacity duration-300">
+                                <label class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest">Tipo de Vertedero</label>
+                                <div class="relative">
+                                    <select id="selVertTipo" onchange="actualizarFormaTanque();" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white text-[10px] font-bold outline-none focus:border-blue-500 appearance-none cursor-pointer">
+                                        <option value="rectangular">RECTANGULAR (FRANCIS)</option>
+                                        <option value="v_notch">V-NOTCH (TRIANGULAR 90°)</option>
+                                        <option value="cipolletti">CIPOLLETTI (TRAPEZOIDAL)</option>
+                                        <option value="cresta_ancha">CRESTA ANCHA</option>
+                                        <option value="parshall">CANALETA PARSHALL</option>
+                                    </select>
+                                    <i data-lucide="chevron-down" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none"></i>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div class="relative">
+                                        <label class="text-[7px] text-slate-500 font-bold ml-1 uppercase tracking-widest">Longitud L (m)</label>
+                                        <input type="number" id="inputVertL" step="0.01" value="1.0" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono text-xs outline-none focus:border-blue-500">
+                                    </div>
+                                    <div class="relative">
+                                        <label class="text-[7px] text-slate-500 font-bold ml-1 uppercase tracking-widest">Paramento p (m)</label>
+                                        <input type="number" id="inputVertP" step="0.01" value="0.2" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-yellow-500 font-mono text-xs outline-none focus:border-yellow-500">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-6">
+                            <h4 class="text-[9px] font-black text-yellow-400 bg-yellow-400/10 px-3 py-1.5 rounded border-l-2 border-yellow-500 uppercase">Parámetros Críticos SCADA</h4>
+                            
+                            <div class="space-y-4">
+                                <label class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest">Zero del Sensor (h_max) m</label>
+                                <!-- Original ID -->
+                                <input type="number" id="inputSensorPos" step="0.01" value="1.8" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white text-base font-black font-mono outline-none focus:border-blue-500">
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-2">Coef. Rugosidad (n)</label>
-                                    <input type="number" id="inputManningN" value="0.013" step="0.001" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-white font-mono font-bold outline-none focus:border-blue-500 transition-all">
+                                    <label class="block text-[8px] font-bold text-yellow-500/50 uppercase ml-1 tracking-widest">Alerta (m)</label>
+                                    <!-- Original ID -->
+                                    <input type="number" id="inputAlerta" step="0.01" value="1.6" class="w-full bg-slate-900 border border-yellow-500/20 rounded-xl px-3 py-2.5 text-yellow-500 font-bold outline-none focus:border-yellow-500">
                                 </div>
                                 <div>
-                                    <label class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-2">Pendiente (S)</label>
-                                    <input type="number" id="inputManningS" value="0.001" step="0.0001" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-white font-mono font-bold outline-none focus:border-blue-500 transition-all">
+                                    <label class="block text-[8px] font-bold text-red-500/50 uppercase ml-1 tracking-widest">Crítico (m)</label>
+                                    <!-- Original ID -->
+                                    <input type="number" id="inputCritico" step="0.01" value="1.8" class="w-full bg-slate-900 border border-red-500/20 rounded-xl px-3 py-2.5 text-red-500 font-bold outline-none focus:border-red-500">
                                 </div>
                             </div>
                         </div>
@@ -539,14 +583,12 @@
 
     </main>
 
-    <script src="env.js"></script>
     <script>
         const AUTH_TOKEN = "dnDjcywHxynS29VxdBLPDMo6nF5UC14QShKq4dmc";
         const FIREBASE_ROOT = "https://hydrosentinel-b7ad6-default-rtdb.firebaseio.com/";
-        const BOT_TOKEN = window.SECRETO_TELEGRAM; // Ahora lee la llave desde el archivo oculto
+        const BOT_TOKEN = "8291136887:AAFq7xiNjkJFotp3CQstGAJnNBi-xl_bqu0";
         const CHAT_ID = "-1003983170152";
 
-        // --- ARQUITECTURA MAESTRO-ESCLAVO (SITIO-NODO) ---
         window.appState = {
             sitios: {},
             nodos: {},
@@ -555,7 +597,6 @@
             nodoActivo: null
         };
 
-        // --- BASE DE DATOS DE USUARIOS (MULTIUSUARIO) ---
         const USUARIOS_AUTORIZADOS = {
             "admin": "052026",
             "darlehin": "052026",
@@ -585,7 +626,64 @@
             }
         };
 
-        // --- NAVEGACIÓN DE PESTAÑAS (TABS) ---
+        // --- MANEJO DE PANELES SCADA Y TANQUE ---
+        window.togglePanels = function() {
+            const modo = document.getElementById('selModoOp').value;
+            const pCanal = document.getElementById('panel_canal');
+            const pMan = document.getElementById('panel_manning');
+            const pVert = document.getElementById('panel_vertedero');
+            if (!pCanal || !pMan || !pVert) return;
+            
+            if(modo === 'solo_canal') {
+                pCanal.style.opacity = '1'; pCanal.style.pointerEvents = 'auto';
+                pMan.style.opacity = '1'; pMan.style.pointerEvents = 'auto';
+                pVert.style.opacity = '0.3'; pVert.style.pointerEvents = 'none';
+            } else if(modo === 'solo_vertedero') {
+                pCanal.style.opacity = '0.3'; pCanal.style.pointerEvents = 'none';
+                pMan.style.opacity = '0.3'; pMan.style.pointerEvents = 'none';
+                pVert.style.opacity = '1'; pVert.style.pointerEvents = 'auto';
+            } else {
+                pCanal.style.opacity = '1'; pCanal.style.pointerEvents = 'auto';
+                pMan.style.opacity = '1'; pMan.style.pointerEvents = 'auto';
+                pVert.style.opacity = '1'; pVert.style.pointerEvents = 'auto';
+            }
+        };
+
+        window.actualizarFormaTanque = function() {
+            const tanque = document.getElementById('tanqueContenedor');
+            if(!tanque) return;
+            
+            const modoEl = document.getElementById('selModoOp');
+            const geoEl = document.getElementById('selGeoCanal');
+            const vertEl = document.getElementById('selVertTipo');
+            if(!modoEl || !geoEl || !vertEl) return;
+
+            const modo = modoEl.value;
+            const geo = geoEl.value;
+            const vert = vertEl.value;
+            
+            let shapeType = "rectangular";
+            if(modo === 'solo_canal') {
+                shapeType = geo;
+            } else {
+                shapeType = vert;
+            }
+
+            if(shapeType === 'v_notch' || shapeType === 'triangular') {
+                tanque.style.clipPath = "polygon(0 0, 100% 0, 100% 70%, 50% 100%, 0 70%)";
+                tanque.style.borderRadius = "0";
+            } else if(shapeType === 'parshall' || shapeType === 'cipolletti' || shapeType === 'trapezoidal') {
+                tanque.style.clipPath = "polygon(0 0, 100% 0, 85% 100%, 15% 100%)";
+                tanque.style.borderRadius = "0";
+            } else if(shapeType === 'circular') {
+                tanque.style.clipPath = "none";
+                tanque.style.borderRadius = "0 0 50px 50px"; 
+            } else {
+                tanque.style.clipPath = "none";
+                tanque.style.borderRadius = "0 0 0.25rem 0.25rem"; 
+            }
+        };
+
         window.switchTab = function(tabIndex) {
             document.getElementById('tab1_content').classList.add('hidden');
             document.getElementById('tab2_content').classList.add('hidden');
@@ -610,36 +708,12 @@
             }
         };
 
-        // --- LÓGICA DE VARIABLES DINÁMICAS DE ECUACIÓN ---
-        window.actualizarCamposEcuacion = function(tipo) {
-            document.getElementById('wrap_L').classList.add('hidden');
-            document.getElementById('wrap_Parshall').classList.add('hidden');
-            document.getElementById('wrap_Parshall').classList.remove('grid');
-            document.getElementById('wrap_Manning').classList.add('hidden');
-            document.getElementById('wrap_Manning').classList.remove('grid');
-
-            if(tipo === 'rectangular' || tipo === 'cipolletti') {
-                document.getElementById('wrap_L').classList.remove('hidden');
-            } else if(tipo === 'parshall' || tipo === 'h_flume') {
-                document.getElementById('wrap_Parshall').classList.remove('hidden');
-                document.getElementById('wrap_Parshall').classList.add('grid');
-            } else if(tipo === 'manning') {
-                document.getElementById('wrap_L').classList.remove('hidden');
-                document.getElementById('wrap_Manning').classList.remove('hidden');
-                document.getElementById('wrap_Manning').classList.add('grid');
-            }
-        };
-        document.getElementById('selEcuacion')?.addEventListener('change', (e) => {
-            window.cambiarModeloTanque(e.target.value);
-            window.actualizarCamposEcuacion(e.target.value);
-        });
-
         const getColorForEq = (eq) => {
             if(!eq) return '#64748b'; 
             const e = eq.toLowerCase();
             if (e.includes('rectangular')) return '#3b82f6'; 
             if (e.includes('parshall')) return '#22c55e';    
-            if (e.includes('manning')) return '#a855f7';     
+            if (e.includes('manning') || e.includes('trapezoidal') || e.includes('circular')) return '#a855f7';     
             if (e.includes('v-notch') || e.includes('v_notch') || e.includes('tri')) return '#eab308'; 
             if (e.includes('cipolletti')) return '#f97316';  
             if (e.includes('h_flume') || e.includes('h-flume')) return '#ec4899'; 
@@ -647,8 +721,9 @@
         };
 
         window.forceScrollToEnd = true;
+        window.lastPlottedTimestamp = null; // Scroll Inteligente
         window.lastCloudCaudal = 0;
-        let anchoL = 1.0, sensorPosM = 1.8, nivelAlertaM = 1.6, nivelCriticoM = 1.8;
+        let sensorPosM = 1.8, nivelAlertaM = 1.6, nivelCriticoM = 1.8;
         let fullDataset = []; 
         let lastDataTime = null;
         let unitSystem = 'standard'; 
@@ -715,9 +790,7 @@
                 
                 if(Object.keys(window.appState.nodos).length === 0) {
                     window.appState.nodos = {
-                        "estacion_01": { camara_ip: "http://192.168.1.50:81/stream" },
-                        "estacion_02": { camara_ip: "http://192.168.1.51:81/stream" },
-                        "estacion_03": { camara_ip: "http://192.168.1.52:81/stream" }
+                        "estacion_01": { camara_ip: "http://192.168.1.50:81/stream" }
                     };
                 }
 
@@ -856,6 +929,11 @@
                 const btnSave = document.getElementById('btnApply');
                 btnSave.disabled = false;
                 btnSave.classList.remove('opacity-50', 'cursor-not-allowed');
+                
+                // Reiniciar trackers de scroll al cambiar de sitio
+                window.forceScrollToEnd = true;
+                window.lastPlottedTimestamp = 0;
+                
                 cargarConfiguracionNodo().then(window.sync);
             }
         };
@@ -884,7 +962,6 @@
             }
         });
 
-        // TAREA 4: GATILLO DEL FILTRO MÉTRICA
         document.getElementById('histMetric').addEventListener('change', () => {
             renderData();
         });
@@ -964,7 +1041,7 @@
             const currentPeriod = document.getElementById('histPeriod').value;
             const btnFilter = document.getElementById('btnApplyFilter');
             
-            if (currentPeriod !== 'specific_day' && currentPeriod !== 'today' && currentPeriod !== 'all') {
+            if (currentPeriod !== 'specific_day' && currentPeriod !== 'today') {
                 const fecha = new Date(timestamp);
                 const dateStr = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}-${String(fecha.getDate()).padStart(2, '0')}`;
                 
@@ -1111,21 +1188,6 @@
                 }
             });
 
-            window.cambiarModeloTanque = function(tipo) {
-                const tanque = document.getElementById('tanqueContenedor');
-                if(!tanque) return;
-                if(tipo === 'v_notch') {
-                    tanque.style.clipPath = "polygon(0 0, 100% 0, 100% 70%, 50% 100%, 0 70%)";
-                    tanque.style.borderRadius = "0";
-                } else if(tipo === 'parshall' || tipo === 'manning' || tipo === 'cipolletti') {
-                    tanque.style.clipPath = "polygon(0 0, 100% 0, 85% 100%, 15% 100%)";
-                    tanque.style.borderRadius = "0";
-                } else {
-                    tanque.style.clipPath = "none";
-                    tanque.style.borderRadius = "0 0 0.25rem 0.25rem"; 
-                }
-            };
-
             cargarDatosArquitectura().then(() => {
                 if(window.appState.sitioActivo) {
                     seleccionarSitioActivo(window.appState.sitioActivo);
@@ -1136,76 +1198,13 @@
             });
         });
 
-        async function cargarConfiguracionNodo() {
-            if(!window.appState.nodoActivo) return;
-            const nId = window.appState.nodoActivo;
-            
-            try {
-                const resCfg = await fetch(`${FIREBASE_ROOT}nodos/${nId}/config_shadow.json?auth=${AUTH_TOKEN}`);
-                const dataCfg = await resCfg.json();
-                
-                if(dataCfg) {
-                    anchoL = parseFloat(dataCfg.parametros?.p_l) || parseFloat(dataCfg.l) || 1.0;
-                    sensorPosM = parseFloat(dataCfg.h) || 1.8;
-                    nivelAlertaM = parseFloat(dataCfg.alerta) || 1.6;
-                    nivelCriticoM = parseFloat(dataCfg.critico) || 1.8;
-                    
-                    if(dataCfg.parametros) {
-                        if(dataCfg.parametros.k) document.getElementById('inputParshallK').value = dataCfg.parametros.k;
-                        if(dataCfg.parametros.n_exp) document.getElementById('inputParshallN').value = dataCfg.parametros.n_exp;
-                        if(dataCfg.parametros.n) document.getElementById('inputManningN').value = dataCfg.parametros.n;
-                        if(dataCfg.parametros.s) document.getElementById('inputManningS').value = dataCfg.parametros.s;
-                    }
-
-                    if(dataCfg.tipo && document.getElementById('selEcuacion')) {
-                        document.getElementById('selEcuacion').value = dataCfg.tipo;
-                        window.cambiarModeloTanque(dataCfg.tipo);
-                        window.actualizarCamposEcuacion(dataCfg.tipo);
-                    }
-                }
-
-                document.getElementById('inputAnchoL').value = anchoL;
-                document.getElementById('inputSensorPos').value = sensorPosM;
-                document.getElementById('inputAlerta').value = nivelAlertaM;
-                document.getElementById('inputCritico').value = nivelCriticoM;
-
-                const nombreSitio = window.appState.sitios[window.appState.sitioActivo]?.nombre || "SITIO ACTIVO";
-                document.getElementById('lblNodoEstado').innerText = nombreSitio.toUpperCase();
-                document.getElementById('lblVideoNodo').innerText = nombreSitio.toUpperCase();
-                document.getElementById('lblTablaNodo').innerText = nombreSitio.toUpperCase();
-
-                const camIp = window.appState.nodos[nId]?.camara_ip || "";
-                const imgFeed = document.getElementById('ipCameraFeed');
-                if(camIp) {
-                    imgFeed.src = camIp;
-                    imgFeed.classList.remove('hidden');
-                    document.getElementById('videoPlaceholder').classList.add('hidden');
-                } else {
-                    imgFeed.classList.add('hidden');
-                    document.getElementById('videoPlaceholder').classList.remove('hidden');
-                }
-                
-                fullDataset = [];
-                lastDataTime = null;
-                lastRawNivel = 0;
-                
-                document.getElementById('evidenceImage').classList.add('hidden');
-                if (document.getElementById('evidenceTextContainer')) document.getElementById('evidenceTextContainer').classList.add('hidden');
-                document.getElementById('evidencePlaceholder').classList.remove('hidden');
-                document.getElementById('evidenceData').classList.add('hidden');
-                document.getElementById('btnDownloadEvidence').disabled = true;
-
-                window.forceScrollToEnd = true;
-                renderData(); 
-                updateOfflineUI("CARGANDO ENLACE", `Conectando con ${nId}...`);
-            } catch(e) { console.error("Error cargando calibración", e); }
-        }
-
+        // ORIGINAL INTACTO CON LA INYECCIÓN SEGURA
         window.sync = async function() {
             if(!window.appState.nodoActivo) return;
             const nId = window.appState.nodoActivo;
             const sId = window.appState.sitioActivo;
 
+            // VARIABLES DEL CÓDIGO ORIGINAL QUE CRASHABAN SI SE LES CAMBIABA EL ID
             anchoL = parseFloat(document.getElementById('inputAnchoL').value) || 1.0;
             sensorPosM = parseFloat(document.getElementById('inputSensorPos').value) || 1.80;
             nivelAlertaM = parseFloat(document.getElementById('inputAlerta').value) || 1.60;
@@ -1310,6 +1309,78 @@
             }
         }
 
+        async function cargarConfiguracionNodo() {
+            if(!window.appState.nodoActivo) return;
+            const nId = window.appState.nodoActivo;
+            
+            try {
+                const resCfg = await fetch(`${FIREBASE_ROOT}nodos/${nId}/config_shadow.json?auth=${AUTH_TOKEN}`);
+                const dataCfg = await resCfg.json();
+                
+                if(dataCfg) {
+                    sensorPosM = parseFloat(dataCfg.h) || 1.8;
+                    nivelAlertaM = parseFloat(dataCfg.alerta) || 1.6;
+                    nivelCriticoM = parseFloat(dataCfg.critico) || 1.8;
+                    
+                    document.getElementById('selModoOp').value = dataCfg.modo_operativo || 'solo_canal';
+                    document.getElementById('selGeoCanal').value = dataCfg.geo_tipo || 'rectangular';
+                    
+                    let anchoFallback = dataCfg.b !== undefined ? dataCfg.b : (dataCfg.l || (dataCfg.parametros ? dataCfg.parametros.p_l : 1.0));
+                    document.getElementById('inputAnchoL').value = anchoFallback;
+                    document.getElementById('inputCanalZ').value = dataCfg.z || 0.0;
+                    
+                    let nFallback = dataCfg.n !== undefined ? dataCfg.n : (dataCfg.parametros ? dataCfg.parametros.n : 0.013);
+                    document.getElementById('inputManningN').value = nFallback;
+                    
+                    let sFallback = dataCfg.s !== undefined ? dataCfg.s : (dataCfg.parametros ? dataCfg.parametros.s : 0.001);
+                    document.getElementById('inputManningS').value = sFallback;
+                    
+                    document.getElementById('selVertTipo').value = dataCfg.vert_tipo || dataCfg.tipo || 'rectangular';
+                    document.getElementById('inputVertL').value = dataCfg.l_vert || anchoFallback;
+                    document.getElementById('inputVertP').value = dataCfg.p_vert || 0.2;
+
+                    document.getElementById('inputSensorPos').value = sensorPosM;
+                    document.getElementById('inputAlerta').value = nivelAlertaM;
+                    document.getElementById('inputCritico').value = nivelCriticoM;
+
+                    if(window.togglePanels) window.togglePanels();
+                    if(window.actualizarFormaTanque) window.actualizarFormaTanque();
+                }
+
+                const nombreSitio = window.appState.sitios[window.appState.sitioActivo]?.nombre || "SITIO ACTIVO";
+                document.getElementById('lblNodoEstado').innerText = nombreSitio.toUpperCase();
+                document.getElementById('lblVideoNodo').innerText = nombreSitio.toUpperCase();
+                document.getElementById('lblTablaNodo').innerText = nombreSitio.toUpperCase();
+
+                const camIp = window.appState.nodos[nId]?.camara_ip || "";
+                const imgFeed = document.getElementById('ipCameraFeed');
+                if(camIp) {
+                    imgFeed.src = camIp;
+                    imgFeed.classList.remove('hidden');
+                    document.getElementById('videoPlaceholder').classList.add('hidden');
+                } else {
+                    imgFeed.classList.add('hidden');
+                    document.getElementById('videoPlaceholder').classList.remove('hidden');
+                }
+                
+                fullDataset = [];
+                lastDataTime = null;
+                lastRawNivel = 0;
+                
+                document.getElementById('evidenceImage').classList.add('hidden');
+                if (document.getElementById('evidenceTextContainer')) document.getElementById('evidenceTextContainer').classList.add('hidden');
+                document.getElementById('evidencePlaceholder').classList.remove('hidden');
+                document.getElementById('evidenceData').classList.add('hidden');
+                document.getElementById('btnDownloadEvidence').disabled = true;
+
+                window.forceScrollToEnd = true;
+                window.lastPlottedTimestamp = 0;
+                
+                renderData(); 
+                updateOfflineUI("CARGANDO ENLACE", `Conectando con ${nId}...`);
+            } catch(e) { console.error("Error cargando calibración", e); }
+        }
+
         function renderData() {
             const period = document.getElementById('histPeriod').value;
             const metric = document.getElementById('histMetric').value;
@@ -1341,6 +1412,11 @@
             }
 
             let intervalMs = 1; 
+            // MODIFICACIÓN TAREA 2: Agrupación en bloques de 1 hora para evitar línea infinita
+            if (period === '7d' || period === '1m' || period === 'custom') {
+                intervalMs = 60 * 60 * 1000; 
+            }
+
             const isStd = unitSystem === 'standard';
             const uNivel = isStd ? 'cm' : 'm';
             const fNivel = isStd ? 1 : 100;
@@ -1388,7 +1464,6 @@
                 document.getElementById('lblAvgCaudal').innerText = `-- ${isStd ? 'm³/s' : 'L/s'}`;
             }
 
-            // TAREA 3: FILTRO DE FECHAS EN EL EJE X
             const labelsArray = aggregated.map(d => {
                 const dateObj = new Date(d.timestamp);
                 if (period === 'today') {
@@ -1400,7 +1475,6 @@
 
             const dataArray = aggregated.map(d => (metric === 'nivel' ? (d.max / fNivel).toFixed(decNivel) : (d.caudal * fCaudal).toFixed(decCaudal)));
 
-            // TAREA 2: ALGORITMO +- 20% EN EL EJE Y
             const dataNum = dataArray.map(Number).filter(n => !isNaN(n));
             let maxDataVal = dataNum.length > 0 ? Math.max(...dataNum) : 10;
             let minDataVal = dataNum.length > 0 ? Math.min(...dataNum) : 0;
@@ -1444,12 +1518,24 @@
             }).join('');
             lucide.createIcons();
 
-            setTimeout(() => {
-                const wrapper = document.getElementById('chartWrapper');
-                if(wrapper) {
-                    wrapper.scrollTo({ left: wrapper.scrollWidth, behavior: 'smooth' });
-                }
-            }, 100);
+            // MODIFICACIÓN TAREA 1: Lógica de Scroll Inteligente
+            const latestPointTs = aggregated.length > 0 ? aggregated[aggregated.length - 1].timestamp : null;
+            let shouldScroll = false;
+            
+            if (window.forceScrollToEnd || (latestPointTs !== null && latestPointTs > (window.lastPlottedTimestamp || 0))) {
+                shouldScroll = true;
+                window.lastPlottedTimestamp = latestPointTs;
+            }
+
+            if (shouldScroll) {
+                setTimeout(() => {
+                    const wrapper = document.getElementById('chartWrapper');
+                    if(wrapper) {
+                        wrapper.scrollTo({ left: wrapper.scrollWidth, behavior: 'smooth' });
+                        window.forceScrollToEnd = false; 
+                    }
+                }, 100);
+            }
         }
 
         function updateRealtimeUI(nivelCm) {
@@ -1477,7 +1563,6 @@
             waterEl.style.height = `${porc}%`;
             document.getElementById('waterPercent').innerText = porc.toFixed(1) + '%';
 
-            // TAREA 1: COLOR DINÁMICO DEL AGUA EN EL TANQUE
             if (valNivel <= 0) {
                 waterEl.className = "absolute bottom-0 left-0 w-full bg-slate-800 text-slate-800 water-fill flex flex-col items-center justify-start z-10";
             } else if (nivelM >= nivelCriticoM) {
@@ -1492,7 +1577,7 @@
             const stDesc = document.getElementById('statusDesc');
             const stIcon = document.getElementById('statusIcon');
 
-            stIcon.className = "p-3 rounded-xl border transition-colors duration-500 self-start";
+            stIcon.className = "p-3 bg-slate-800/50 rounded-xl text-slate-500 border border-slate-700/50 self-start transition-colors duration-500";
 
             if (valNivel <= 0) {
                 stTitle.innerText = "ESPERANDO FLUJO"; stDesc.innerText = "Canal en nivel cero";
@@ -1529,43 +1614,38 @@
 
         document.getElementById('btnApply').addEventListener('click', async () => {
             const btn = document.getElementById('btnApply');
+            const origHtml = btn.innerHTML;
             btn.innerHTML = '<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> Guardando...';
             btn.disabled = true;
 
             try {
                 const nId = window.appState.nodoActivo;
                 const nomSitio = window.appState.sitios[window.appState.sitioActivo]?.nombre || "SITIO ACTIVO";
-                const ecuacionVal = document.getElementById('selEcuacion').value;
-                const l_val = parseFloat(document.getElementById('inputAnchoL').value);
-                const h_val = parseFloat(document.getElementById('inputSensorPos').value);
-                const alerta_val = parseFloat(document.getElementById('inputAlerta').value);
-                const critico_val = parseFloat(document.getElementById('inputCritico').value);
-
+                
                 const configShadow = {
                     sitio: window.appState.sitioActivo,
-                    tipo: ecuacionVal,
-                    l: l_val,
-                    h: h_val,
-                    alerta: alerta_val,
-                    critico: critico_val
+                    modo_operativo: document.getElementById('selModoOp').value,
+                    geo_tipo: document.getElementById('selGeoCanal').value,
+                    b: parseFloat(document.getElementById('inputAnchoL').value),
+                    z: parseFloat(document.getElementById('inputCanalZ').value),
+                    n: parseFloat(document.getElementById('inputManningN').value),
+                    s: parseFloat(document.getElementById('inputManningS').value),
+                    vert_tipo: document.getElementById('selVertTipo').value,
+                    l_vert: parseFloat(document.getElementById('inputVertL').value),
+                    p_vert: parseFloat(document.getElementById('inputVertP').value),
+                    h: parseFloat(document.getElementById('inputSensorPos').value),
+                    alerta: parseFloat(document.getElementById('inputAlerta').value),
+                    critico: parseFloat(document.getElementById('inputCritico').value),
+                    tipo: document.getElementById('selVertTipo').value, 
+                    l: parseFloat(document.getElementById('inputAnchoL').value)
                 };
-
-                const params = {};
-                if(ecuacionVal === 'parshall' || ecuacionVal === 'h_flume') {
-                    params.k = parseFloat(document.getElementById('inputParshallK').value);
-                    params.n_exp = parseFloat(document.getElementById('inputParshallN').value);
-                } else if(ecuacionVal === 'manning') {
-                    params.n = parseFloat(document.getElementById('inputManningN').value);
-                    params.s = parseFloat(document.getElementById('inputManningS').value);
-                }
-                if(Object.keys(params).length > 0) configShadow.parametros = params;
 
                 await fetch(`${FIREBASE_ROOT}nodos/${nId}/config_shadow.json?auth=${AUTH_TOKEN}`, {
                     method: 'PUT',
                     body: JSON.stringify(configShadow)
                 });
 
-                const msgAudit = `🔐 *AUDITORÍA NOC v6.0*\nEl usuario *${window.usuarioActivo}* modificó calibración.\n📍 *Sitio:* ${nomSitio.toUpperCase()}\n⚙️ *Ec:* ${ecuacionVal}\n📐 *L:* ${l_val}m | *H:* ${h_val}m\n⚠️ *Alertas:* ${alerta_val}m (A) / ${critico_val}m (C)`;
+                const msgAudit = `🔐 *AUDITORÍA NOC v6.0*\nEl usuario *${window.usuarioActivo}* modificó calibración AVANZADA.\n📍 *Sitio:* ${nomSitio.toUpperCase()}\n⚙️ *Modo:* ${configShadow.modo_operativo}\n📐 *H max:* ${configShadow.h}m\n⚠️ *Alertas:* ${configShadow.alerta}m / ${configShadow.critico}m`;
                 fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(msgAudit)}&parse_mode=Markdown`).catch(()=>{});
 
                 document.getElementById('calibracionOverlay').classList.remove('hidden');
@@ -1574,18 +1654,18 @@
                 
                 btn.innerHTML = '<i data-lucide="check-circle" class="w-4 h-4"></i> CONFIGURACIÓN EXITOSA';
                 btn.className = "bg-emerald-500 text-white font-bold py-3 px-8 rounded-xl uppercase text-[10px] tracking-[0.2em] shadow-[0_0_15px_rgba(16,185,129,0.5)] flex items-center gap-3 transition-all";
-                lucide.createIcons();
+                if(window.lucide) window.lucide.createIcons();
             } catch (e) { 
                 btn.innerHTML = '<i data-lucide="x-circle" class="w-4 h-4"></i> ERROR DE RED';
                 btn.className = "bg-red-500 text-white font-bold py-3 px-8 rounded-xl uppercase text-[10px] tracking-[0.2em] shadow-[0_0_15px_rgba(239,68,68,0.5)] flex items-center gap-3 transition-all";
-                lucide.createIcons();
+                if(window.lucide) window.lucide.createIcons();
             }
 
             setTimeout(() => {
                 btn.disabled = false;
                 btn.className = "bg-blue-600/90 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-xl uppercase text-[10px] tracking-[0.2em] transition-all shadow-[0_0_15px_rgba(37,99,235,0.4)] active:scale-95 flex items-center gap-3 border border-blue-400/50";
-                btn.innerHTML = '<i data-lucide="save" class="w-4 h-4"></i> Guardar Variables y Sincronizar';
-                lucide.createIcons();
+                btn.innerHTML = origHtml;
+                if(window.lucide) window.lucide.createIcons();
             }, 3000);
         });
 
